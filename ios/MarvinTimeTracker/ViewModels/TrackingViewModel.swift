@@ -1,0 +1,115 @@
+import Foundation
+import ActivityKit
+import Observation
+
+@Observable
+final class TrackingViewModel {
+    var trackingState: TrackingState = .idle
+    var todayTasks: [MarvinTask] = []
+    var isLoading = false
+    var errorMessage: String?
+    var showingTaskPicker = false
+
+    var isOnboarded: Bool {
+        KeychainService.isConfigured
+    }
+
+    private var apiClient: MarvinAPIClient? {
+        guard let token = KeychainService.marvinAPIToken,
+              let serverURL = KeychainService.serverURL else { return nil }
+        return MarvinAPIClient(token: token, serverURL: serverURL)
+    }
+
+    private var pushTokenService: PushTokenService? {
+        guard let serverURL = KeychainService.serverURL else { return nil }
+        return PushTokenService(serverURL: serverURL)
+    }
+
+    // MARK: - Onboarding
+
+    func saveCredentials(token: String, serverURL: String) {
+        KeychainService.marvinAPIToken = token
+        KeychainService.serverURL = serverURL
+
+        // Also save server URL to App Group for widget extension access
+        let defaults = UserDefaults(suiteName: "group.com.strubio.MarvinTimeTracker")
+        defaults?.set(serverURL, forKey: "serverURL")
+    }
+
+    func validateToken(_ token: String) async -> Bool {
+        guard let serverURL = KeychainService.serverURL else { return false }
+        let client = MarvinAPIClient(token: token, serverURL: serverURL)
+        return (try? await client.validateToken()) ?? false
+    }
+
+    // MARK: - Tracking
+
+    func refreshStatus() async {
+        guard let client = apiClient else { return }
+
+        do {
+            let status = try await client.fetchStatus()
+            if status.tracking, let taskId = status.taskId, let title = status.taskTitle, let startedAtMs = status.startedAt {
+                let startedAt = Date(timeIntervalSince1970: Double(startedAtMs) / 1000.0)
+                trackingState = .tracking(taskId: taskId, title: title, startedAt: startedAt)
+            } else {
+                trackingState = .idle
+            }
+        } catch {
+            errorMessage = "Failed to refresh status"
+        }
+    }
+
+    func loadTodayTasks() async {
+        guard let client = apiClient else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            todayTasks = try await client.todayItems()
+        } catch {
+            errorMessage = "Failed to load tasks"
+        }
+    }
+
+    func startTracking(task: MarvinTask) async {
+        guard let client = apiClient else { return }
+
+        do {
+            try await client.startTracking(taskId: task.id, title: task.title)
+            trackingState = .tracking(taskId: task.id, title: task.title, startedAt: Date())
+            showingTaskPicker = false
+        } catch {
+            errorMessage = "Failed to start tracking"
+        }
+    }
+
+    func stopTracking() async {
+        guard let client = apiClient else { return }
+
+        do {
+            try await client.stopTracking(taskId: trackingState.taskId)
+            trackingState = .idle
+        } catch {
+            errorMessage = "Failed to stop tracking"
+        }
+    }
+
+    // MARK: - Push Tokens
+
+    func observePushTokens() async {
+        guard let service = pushTokenService else { return }
+
+        for await tokenData in Activity<TimeTrackerAttributes>.pushToStartTokenUpdates {
+            let token = tokenData.map { String(format: "%02x", $0) }.joined()
+            try? await service.register(pushToStartToken: token)
+        }
+    }
+
+    func signOut() {
+        KeychainService.marvinAPIToken = nil
+        KeychainService.serverURL = nil
+        trackingState = .idle
+        todayTasks = []
+    }
+}

@@ -1,0 +1,55 @@
+name: MarvinTimeTracker
+options:
+  bundleIdPrefix: com.strubio
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+
+packages:
+  KeychainAccess:
+    url: https://github.com/kishikawakatsumi/KeychainAccess.git
+    from: "4.2.2"
+
+targets:
+  MarvinTimeTracker:
+    type: application
+    platform: iOS
+    sources:
+      - path: MarvinTimeTracker
+      - path: Shared
+    settings:
+      base:
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.strubio.MarvinTimeTracker
+    entitlements:
+      path: MarvinTimeTracker/MarvinTimeTracker.entitlements
+      properties:
+        aps-environment: development
+        com.apple.security.application-groups:
+          - group.com.strubio.MarvinTimeTracker
+    dependencies:
+      - package: KeychainAccess
+      - target: MarvinTimeTrackerWidgets
+
+  MarvinTimeTrackerWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MarvinTimeTrackerWidgets
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.strubio.MarvinTimeTracker.widgets
+        INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: MarvinTimeTrackerWidgets/MarvinTimeTrackerWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.strubio.MarvinTimeTracker
+    dependencies:
+      - package: KeychainAccess
