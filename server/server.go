@@ -12,7 +12,12 @@ type Server struct {
 	store   *StateStore
 }
 
-func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier) *Server {
+func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...ServerOption) *Server {
+	so := &serverOptions{}
+	for _, o := range opts {
+		o(so)
+	}
+
 	wh := NewWebhookHandler(store, dedup, notifier)
 	rh := NewRegisterHandler(store)
 
@@ -21,6 +26,12 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier) *Server 
 	mux.HandleFunc("POST /webhook/start", wh.HandleStart)
 	mux.HandleFunc("POST /webhook/stop", wh.HandleStop)
 	mux.HandleFunc("POST /register", rh.Handle)
+
+	if so.marvin != nil {
+		th := NewTrackHandler(store, so.marvin, notifier)
+		mux.HandleFunc("POST /start", th.HandleStart)
+		mux.HandleFunc("POST /stop", th.HandleStop)
+	}
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:     []string{"*"},
@@ -32,6 +43,18 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier) *Server 
 	return &Server{
 		handler: c.Handler(mux),
 		store:   store,
+	}
+}
+
+type serverOptions struct {
+	marvin MarvinAPIClient
+}
+
+type ServerOption func(*serverOptions)
+
+func WithMarvinClient(mc MarvinAPIClient) ServerOption {
+	return func(so *serverOptions) {
+		so.marvin = mc
 	}
 }
 

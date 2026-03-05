@@ -39,7 +39,12 @@ func main() {
 	poller.Start()
 	log.Printf("poller started (active=%v, idle=%v)", cfg.PollIntervalActive, cfg.PollIntervalIdle)
 
-	srv := NewServer(store, dedup, notifier)
+	// Start 8-hour Live Activity renewal
+	renewal := NewRenewal(store, notifier)
+	renewal.Start()
+	log.Printf("renewal monitor started")
+
+	srv := NewServer(store, dedup, notifier, WithMarvinClient(marvin))
 
 	log.Printf("listening on %s", cfg.ListenAddr)
 	if err := http.ListenAndServe(cfg.ListenAddr, srv); err != nil {
