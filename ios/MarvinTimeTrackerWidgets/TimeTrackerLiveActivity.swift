@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -20,8 +21,13 @@ struct TimeTrackerLiveActivity: Widget {
                         .font(.headline)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    // Placeholder for stop button (Phase 7)
-                    EmptyView()
+                    Button(intent: StopTrackingIntent()) {
+                        Label("Stop", systemImage: "stop.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
                 }
             } compactLeading: {
                 Image(systemName: "timer")
@@ -38,19 +44,43 @@ struct TimeTrackerLiveActivity: Widget {
 
     @ViewBuilder
     private func lockScreenView(context: ActivityViewContext<TimeTrackerAttributes>) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
+        @Environment(\.activityFamily) var activityFamily
+
+        if activityFamily == .small {
+            // Watch Smart Stack layout
+            VStack(spacing: 2) {
                 Text(context.state.taskTitle)
-                    .font(.headline)
+                    .font(.caption)
                     .lineLimit(1)
 
                 Text(timerInterval: context.state.startedAt...(.distantFuture), countsDown: false, showsHours: true)
-                    .font(.system(size: 32, weight: .light, design: .monospaced))
+                    .font(.system(size: 28, weight: .medium, design: .monospaced))
                     .monospacedDigit()
             }
+            .padding(4)
+        } else {
+            // iPhone Lock Screen layout
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(context.state.taskTitle)
+                        .font(.headline)
+                        .lineLimit(1)
 
-            Spacer()
+                    Text(timerInterval: context.state.startedAt...(.distantFuture), countsDown: false, showsHours: true)
+                        .font(.system(size: 32, weight: .light, design: .monospaced))
+                        .monospacedDigit()
+                }
+
+                Spacer()
+
+                Button(intent: StopTrackingIntent()) {
+                    Image(systemName: "stop.fill")
+                        .font(.title2)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+            }
+            .padding()
         }
-        .padding()
     }
 }

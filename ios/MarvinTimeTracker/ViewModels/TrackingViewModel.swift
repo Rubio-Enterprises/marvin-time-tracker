@@ -77,8 +77,12 @@ final class TrackingViewModel {
 
         do {
             try await client.startTracking(taskId: task.id, title: task.title)
-            trackingState = .tracking(taskId: task.id, title: task.title, startedAt: Date())
+            let startedAt = Date()
+            trackingState = .tracking(taskId: task.id, title: task.title, startedAt: startedAt)
             showingTaskPicker = false
+
+            // Start in-app Live Activity
+            await startLiveActivity(taskTitle: task.title, startedAt: startedAt)
         } catch {
             errorMessage = "Failed to start tracking"
         }
@@ -92,6 +96,35 @@ final class TrackingViewModel {
             trackingState = .idle
         } catch {
             errorMessage = "Failed to stop tracking"
+        }
+    }
+
+    // MARK: - Live Activity
+
+    private func startLiveActivity(taskTitle: String, startedAt: Date) async {
+        let attributes = TimeTrackerAttributes()
+        let contentState = TimeTrackerAttributes.ContentState(
+            taskTitle: taskTitle,
+            startedAt: startedAt,
+            isTracking: true
+        )
+
+        do {
+            let activity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: contentState, staleDate: nil),
+                pushType: .token
+            )
+
+            // Observe update token for this activity
+            Task {
+                for await tokenData in activity.pushTokenUpdates {
+                    let token = tokenData.map { String(format: "%02x", $0) }.joined()
+                    try? await pushTokenService?.register(updateToken: token)
+                }
+            }
+        } catch {
+            // Live Activity may not be available (e.g., simulator)
         }
     }
 
