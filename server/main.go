@@ -7,12 +7,16 @@ import (
 )
 
 func main() {
+	cfg, err := LoadConfig()
+	if err != nil {
+		log.Fatalf("config error: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", handleStatus)
 
-	addr := ":8080"
-	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	log.Printf("listening on %s", cfg.ListenAddr)
+	if err := http.ListenAndServe(cfg.ListenAddr, mux); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }
