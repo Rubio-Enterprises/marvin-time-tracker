@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -12,16 +12,16 @@ func main() {
 		log.Fatalf("config error: %v", err)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", handleStatus)
+	store := NewStateStore(cfg.StateFilePath)
+	if err := store.Load(); err != nil {
+		log.Fatalf("state load error: %v", err)
+	}
+
+	dedup := NewDedupCache(60 * time.Second)
+	srv := NewServer(store, dedup, nil)
 
 	log.Printf("listening on %s", cfg.ListenAddr)
-	if err := http.ListenAndServe(cfg.ListenAddr, mux); err != nil {
+	if err := http.ListenAndServe(cfg.ListenAddr, srv); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
-}
-
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
