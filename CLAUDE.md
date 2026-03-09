@@ -10,10 +10,10 @@ Marvin Time Tracker: a minimal iOS app + Go relay server that surfaces a live ti
 
 ### Go Server
 ```bash
-make build          # Build server binary to server/marvin-relay
-make test           # Run all server tests
-make run            # Build and run server
-make clean          # Remove built binary
+just build          # Build server binary to server/marvin-relay
+just test           # Run all server tests
+just run            # Build and run server
+just clean          # Remove built binary
 
 # Run a single test
 go test ./server/... -run TestFunctionName
