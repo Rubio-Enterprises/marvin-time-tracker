@@ -43,7 +43,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	cfg := &Config{
 		APNsKeyID:          get("APNS_KEY_ID"),
 		APNsTeamID:         get("APNS_TEAM_ID"),
-		APNsPrivateKeyPath: get("APNS_KEY_P8_PATH"),
+		APNsPrivateKeyPath: expandHome(get("APNS_KEY_P8_PATH")),
 		APNsBundleID:       getOrDefault(get, "APNS_BUNDLE_ID", "com.strubio.MarvinTimeTracker"),
 		MarvinAPIToken:     token,
 		StateFilePath:      getOrDefault(get, "STATE_FILE_PATH", "./state.json"),
@@ -71,6 +71,15 @@ func parseDuration(v string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func expandHome(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			return home + path[1:]
+		}
+	}
+	return path
 }
 
 // loadConfigFile parses a KEY=value config file. Blank lines and lines

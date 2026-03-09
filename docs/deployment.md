@@ -118,11 +118,7 @@ brew tap strubio-ray/tap
 brew install marvin-relay
 ```
 
-Create the environment file:
-
-```bash
-cp /usr/local/share/marvin-relay/.env.example ~/Library/Application\ Support/marvin-relay/.env
-```
+A default config file is installed to `/opt/homebrew/etc/marvin-relay/config`.
 
 ### Option B: Build from source
 
@@ -130,12 +126,12 @@ cp /usr/local/share/marvin-relay/.env.example ~/Library/Application\ Support/mar
 git clone https://github.com/strubio-ray/marvin-time-tracker.git
 cd marvin-time-tracker
 make build
-cp .env.example .env
+cp server/config.example server/config
 ```
 
-### Configure environment
+### Configure
 
-Edit the `.env` file with the values from previous steps:
+Edit the config file with values from previous steps:
 
 | Variable | Source |
 |---|---|
@@ -144,7 +140,9 @@ Edit the `.env` file with the values from previous steps:
 | `APNS_TEAM_ID` | Team ID from [Membership](https://developer.apple.com/account/#/membership) |
 | `APNS_KEY_P8_PATH` | Path to the .p8 file downloaded in Step 3 |
 
-Copy the .p8 file to your server directory.
+Copy the .p8 file to the appropriate directory:
+- **Homebrew**: `/opt/homebrew/etc/marvin-relay/`
+- **From source**: project root (or wherever `APNS_KEY_P8_PATH` points)
 
 ### Start the server
 
@@ -281,7 +279,7 @@ bundle exec fastlane build
 ### Server not receiving webhooks
 - Check Tailscale Funnel status: `tailscale funnel status`
 - Verify HTTPS: `curl https://<your-machine>.ts.net/status`
-- Check server logs: `brew services log marvin-relay` or check log files
+- Check server logs: `cat /opt/homebrew/var/log/marvin-relay.log`
 
 ### Live Activity not appearing
 - Ensure push-to-start token is registered: check `/status` endpoint for `hasPushToStartToken: true`

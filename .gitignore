@@ -25,6 +25,7 @@ ios/build/
 .env
 *.p8
 state.json
+server/config
 
 # Fastlane
 ios/fastlane/report.xml

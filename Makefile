@@ -7,7 +7,7 @@ test:
 	go test ./server/...
 
 run: build
-	./server/marvin-relay
+	./server/marvin-relay --config server/config
 
 clean:
 	rm -f server/marvin-relay

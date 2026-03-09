@@ -90,7 +90,7 @@ iOS App → POST /start|/stop → Marvin API (via Go server proxy)
 
 ## Configuration
 
-Server configured via env vars (see `.env.example` in project root):
+Server configured via config file and/or env vars (see `server/config.example`):
 - `MARVIN_API_TOKEN` (required)
 - `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_P8_PATH`, `APNS_BUNDLE_ID`
 - `STATE_FILE_PATH`, `LISTEN_ADDR`, `POLL_INTERVAL_ACTIVE`, `POLL_INTERVAL_IDLE`
