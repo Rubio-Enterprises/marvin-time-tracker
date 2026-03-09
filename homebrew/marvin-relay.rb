@@ -5,7 +5,7 @@ class MarvinRelay < Formula
   homepage "https://github.com/strubio-ray/marvin-time-tracker"
   version "0.1.0"
   url "https://github.com/strubio-ray/marvin-time-tracker/archive/refs/tags/v#{version}.tar.gz"
-  sha256 "6094a89d0f0eb0b91ef05af4f8ef3b06707b4c0d54fc1732a538d51caf060012"
+  sha256 "077419088fbcedadbf25239af85bf826f49e7819911bb8d861c140659750cac0"
   license "MIT"
 
   livecheck do
