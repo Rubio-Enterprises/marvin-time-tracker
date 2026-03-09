@@ -88,7 +88,7 @@ func TestPollerDetectsMissedStart(t *testing.T) {
 	}
 	notifier := &mockNotifier{}
 
-	poller := NewPoller(mc, store, notifier, 30*time.Second, 5*time.Minute, nil)
+	poller := NewPoller(mc, store, notifier, nil, 30*time.Second, 5*time.Minute, nil)
 	poller.poll()
 
 	state := store.Get()
@@ -115,7 +115,7 @@ func TestPollerDetectsMissedStop(t *testing.T) {
 	mc := &mockMarvinClient{trackedItem: nil}
 	notifier := &mockNotifier{}
 
-	poller := NewPoller(mc, store, notifier, 30*time.Second, 5*time.Minute, nil)
+	poller := NewPoller(mc, store, notifier, nil, 30*time.Second, 5*time.Minute, nil)
 	poller.poll()
 
 	state := store.Get()
@@ -144,7 +144,7 @@ func TestPollerIgnoresStaleTrackedItem(t *testing.T) {
 	}
 	notifier := &mockNotifier{}
 
-	poller := NewPoller(mc, store, notifier, 30*time.Second, 5*time.Minute, nil)
+	poller := NewPoller(mc, store, notifier, nil, 30*time.Second, 5*time.Minute, nil)
 	poller.poll()
 
 	state := store.Get()
@@ -173,7 +173,7 @@ func TestPollerAcceptsNewTrackedItem(t *testing.T) {
 	}
 	notifier := &mockNotifier{}
 
-	poller := NewPoller(mc, store, notifier, 30*time.Second, 5*time.Minute, nil)
+	poller := NewPoller(mc, store, notifier, nil, 30*time.Second, 5*time.Minute, nil)
 	poller.poll()
 
 	state := store.Get()

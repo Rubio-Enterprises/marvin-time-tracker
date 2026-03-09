@@ -10,6 +10,7 @@ type Poller struct {
 	marvin         MarvinAPIClient
 	store          *StateStore
 	notifier       Notifier
+	broker         *Broker
 	activeInterval time.Duration
 	idleInterval   time.Duration
 	quota          *QuotaCounter
@@ -18,12 +19,13 @@ type Poller struct {
 	cancel         context.CancelFunc
 }
 
-func NewPoller(marvin MarvinAPIClient, store *StateStore, notifier Notifier, activeInterval, idleInterval time.Duration, quota *QuotaCounter) *Poller {
+func NewPoller(marvin MarvinAPIClient, store *StateStore, notifier Notifier, broker *Broker, activeInterval, idleInterval time.Duration, quota *QuotaCounter) *Poller {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Poller{
 		marvin:         marvin,
 		store:          store,
 		notifier:       notifier,
+		broker:         broker,
 		activeInterval: activeInterval,
 		idleInterval:   idleInterval,
 		quota:          quota,
@@ -112,11 +114,12 @@ func (p *Poller) poll() {
 			s.LiveActivityStartedAt = time.Now()
 		})
 
-		notifyTrackingStarted(p.ctx, p.store, p.notifier, item.Title, item.StartedAt, DefaultSilentPushGracePeriod)
+		notifyTrackingStarted(p.ctx, p.store, p.notifier, p.broker, item.Title, item.StartedAt, DefaultSilentPushGracePeriod)
 	} else if item == nil && state.IsTracking() {
 		// Missed stop
 		log.Printf("poller: detected missed stop")
 		updateToken := state.UpdateToken
+		stoppedTaskID := state.TrackingTaskID
 		p.store.Update(func(s *State) {
 			s.TrackingTaskID = ""
 			s.TaskTitle = ""
@@ -126,6 +129,6 @@ func (p *Poller) poll() {
 			s.UpdateToken = ""
 		})
 
-		notifyTrackingStopped(p.store, p.notifier, updateToken)
+		notifyTrackingStopped(p.store, p.notifier, p.broker, updateToken, stoppedTaskID)
 	}
 }

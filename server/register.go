@@ -15,10 +15,11 @@ type registerPayload struct {
 type RegisterHandler struct {
 	store    *StateStore
 	notifier Notifier
+	broker   *Broker
 }
 
-func NewRegisterHandler(store *StateStore, notifier Notifier) *RegisterHandler {
-	return &RegisterHandler{store: store, notifier: notifier}
+func NewRegisterHandler(store *StateStore, notifier Notifier, broker *Broker) *RegisterHandler {
+	return &RegisterHandler{store: store, notifier: notifier, broker: broker}
 }
 
 func (rh *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +61,7 @@ func (rh *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if payload.DeviceToken != "" && state.UpdateToken == "" && state.PushToStartToken == "" {
 			// Device token registered while tracking but no activity tokens — use fallback chain
-			notifyTrackingStarted(r.Context(), rh.store, rh.notifier, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod)
+			notifyTrackingStarted(r.Context(), rh.store, rh.notifier, rh.broker, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod)
 		}
 	}
 

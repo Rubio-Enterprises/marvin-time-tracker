@@ -10,7 +10,7 @@ import (
 
 func TestRegisterPushToStartToken(t *testing.T) {
 	store := NewStateStore(tempStateFile(t))
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 
 	body, _ := json.Marshal(registerPayload{PushToStartToken: "token-abc"})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
@@ -29,7 +29,7 @@ func TestRegisterPushToStartToken(t *testing.T) {
 
 func TestRegisterUpdateToken(t *testing.T) {
 	store := NewStateStore(tempStateFile(t))
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 
 	body, _ := json.Marshal(registerPayload{UpdateToken: "update-xyz"})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
@@ -48,7 +48,7 @@ func TestRegisterUpdateToken(t *testing.T) {
 
 func TestRegisterBothTokens(t *testing.T) {
 	store := NewStateStore(tempStateFile(t))
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 
 	body, _ := json.Marshal(registerPayload{
 		PushToStartToken: "start-1",
@@ -70,7 +70,7 @@ func TestRegisterTokenReplacement(t *testing.T) {
 		s.PushToStartToken = "old-token"
 	})
 
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 	body, _ := json.Marshal(registerPayload{PushToStartToken: "new-token"})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
 	w := httptest.NewRecorder()
@@ -84,7 +84,7 @@ func TestRegisterTokenReplacement(t *testing.T) {
 
 func TestRegisterDeviceToken(t *testing.T) {
 	store := NewStateStore(tempStateFile(t))
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 
 	body, _ := json.Marshal(registerPayload{DeviceToken: "device-abc"})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
@@ -110,7 +110,7 @@ func TestRegisterProactiveSilentPush(t *testing.T) {
 	})
 
 	notifier := &mockNotifier{}
-	rh := NewRegisterHandler(store, notifier)
+	rh := NewRegisterHandler(store, notifier, nil)
 
 	body, _ := json.Marshal(registerPayload{DeviceToken: "device-abc"})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
@@ -128,7 +128,7 @@ func TestRegisterProactiveSilentPush(t *testing.T) {
 
 func TestRegisterNoTokens(t *testing.T) {
 	store := NewStateStore(tempStateFile(t))
-	rh := NewRegisterHandler(store, nil)
+	rh := NewRegisterHandler(store, nil, nil)
 
 	body, _ := json.Marshal(registerPayload{})
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))

@@ -19,13 +19,15 @@ type WebhookHandler struct {
 	store    *StateStore
 	dedup    *DedupCache
 	notifier Notifier
+	broker   *Broker
 }
 
-func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier) *WebhookHandler {
+func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier, broker *Broker) *WebhookHandler {
 	return &WebhookHandler{
 		store:    store,
 		dedup:    dedup,
 		notifier: notifier,
+		broker:   broker,
 	}
 }
 
@@ -91,7 +93,7 @@ func (wh *WebhookHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("webhook/start: tracking %s (%s)", payload.TaskID, payload.Title)
 
-	notifyTrackingStarted(r.Context(), wh.store, wh.notifier, payload.Title, payload.Timestamp, DefaultSilentPushGracePeriod)
+	notifyTrackingStarted(r.Context(), wh.store, wh.notifier, wh.broker, payload.Title, payload.Timestamp, DefaultSilentPushGracePeriod)
 }
 
 func (wh *WebhookHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +126,7 @@ func (wh *WebhookHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 
 	state := wh.store.Get()
 	updateToken := state.UpdateToken
+	stoppedTaskID := state.TrackingTaskID
 
 	now := time.Now()
 	wh.store.Update(func(s *State) {
@@ -140,5 +143,5 @@ func (wh *WebhookHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("webhook/stop: stopped tracking")
 
-	notifyTrackingStopped(wh.store, wh.notifier, updateToken)
+	notifyTrackingStopped(wh.store, wh.notifier, wh.broker, updateToken, stoppedTaskID)
 }

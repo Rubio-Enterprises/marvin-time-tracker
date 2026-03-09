@@ -18,8 +18,8 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 		o(so)
 	}
 
-	wh := NewWebhookHandler(store, dedup, notifier)
-	rh := NewRegisterHandler(store, notifier)
+	wh := NewWebhookHandler(store, dedup, notifier, so.broker)
+	rh := NewRegisterHandler(store, notifier, so.broker)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", statusHandler(store))
@@ -27,8 +27,12 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 	mux.HandleFunc("POST /webhook/stop", wh.HandleStop)
 	mux.HandleFunc("POST /register", rh.Handle)
 
+	if so.broker != nil {
+		mux.HandleFunc("GET /events", sseHandler(store, so.broker))
+	}
+
 	if so.marvin != nil {
-		th := NewTrackHandler(store, so.marvin, notifier)
+		th := NewTrackHandler(store, so.marvin, notifier, so.broker)
 		mux.HandleFunc("POST /start", th.HandleStart)
 		mux.HandleFunc("POST /stop", th.HandleStop)
 	}
@@ -48,9 +52,16 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 
 type serverOptions struct {
 	marvin MarvinAPIClient
+	broker *Broker
 }
 
 type ServerOption func(*serverOptions)
+
+func WithBroker(b *Broker) ServerOption {
+	return func(so *serverOptions) {
+		so.broker = b
+	}
+}
 
 func WithMarvinClient(mc MarvinAPIClient) ServerOption {
 	return func(so *serverOptions) {

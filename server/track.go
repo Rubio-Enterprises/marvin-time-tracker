@@ -21,13 +21,15 @@ type TrackHandler struct {
 	store    *StateStore
 	marvin   MarvinAPIClient
 	notifier Notifier
+	broker   *Broker
 }
 
-func NewTrackHandler(store *StateStore, marvin MarvinAPIClient, notifier Notifier) *TrackHandler {
+func NewTrackHandler(store *StateStore, marvin MarvinAPIClient, notifier Notifier, broker *Broker) *TrackHandler {
 	return &TrackHandler{
 		store:    store,
 		marvin:   marvin,
 		notifier: notifier,
+		broker:   broker,
 	}
 }
 
@@ -71,10 +73,10 @@ func (th *TrackHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("track/start: started %s (%s)", req.TaskID, req.Title)
 
-	notifyTrackingStarted(r.Context(), th.store, th.notifier, req.Title, startedAt, DefaultSilentPushGracePeriod)
+	notifyTrackingStarted(r.Context(), th.store, th.notifier, th.broker, req.Title, startedAt, DefaultSilentPushGracePeriod)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "startedAt": startedAt})
 }
 
 func (th *TrackHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +128,7 @@ func (th *TrackHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateToken := state.UpdateToken
+	stoppedTaskID := taskID
 	th.store.Update(func(s *State) {
 		s.TrackingTaskID = ""
 		s.TaskTitle = ""
@@ -139,7 +142,7 @@ func (th *TrackHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("track/stop: stopped %s", taskID)
 
-	notifyTrackingStopped(th.store, th.notifier, updateToken)
+	notifyTrackingStopped(th.store, th.notifier, th.broker, updateToken, stoppedTaskID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

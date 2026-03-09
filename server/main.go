@@ -43,11 +43,13 @@ func main() {
 		log.Printf("APNs not configured, push notifications disabled")
 	}
 
+	broker := NewBroker()
+
 	// Initialize Marvin client and poller
 	marvin := NewMarvinClient(cfg.MarvinAPIToken, cfg.MarvinFullAccessToken)
 	if cfg.PollEnabled {
 		quota := NewQuotaCounter()
-		poller := NewPoller(marvin, store, notifier, cfg.PollIntervalActive, cfg.PollIntervalIdle, quota)
+		poller := NewPoller(marvin, store, notifier, broker, cfg.PollIntervalActive, cfg.PollIntervalIdle, quota)
 		poller.Start()
 		log.Printf("poller started (active=%v, idle=%v)", cfg.PollIntervalActive, cfg.PollIntervalIdle)
 	} else {
@@ -55,11 +57,11 @@ func main() {
 	}
 
 	// Start 8-hour Live Activity renewal
-	renewal := NewRenewal(store, notifier)
+	renewal := NewRenewal(store, notifier, broker)
 	renewal.Start()
 	log.Printf("renewal monitor started")
 
-	srv := NewServer(store, dedup, notifier, WithMarvinClient(marvin))
+	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin))
 
 	log.Printf("listening on %s", cfg.ListenAddr)
 	if err := http.ListenAndServe(cfg.ListenAddr, srv); err != nil {

@@ -18,7 +18,7 @@ func TestRenewalNotTriggeredEarly(t *testing.T) {
 	})
 
 	notifier := &mockNotifier{}
-	rn := NewRenewal(store, notifier)
+	rn := NewRenewal(store, notifier, nil)
 	rn.now = func() time.Time { return now.Add(1 * time.Hour) }
 	rn.check()
 
@@ -40,7 +40,7 @@ func TestRenewalTriggeredAtThreshold(t *testing.T) {
 	})
 
 	notifier := &mockNotifier{}
-	rn := NewRenewal(store, notifier)
+	rn := NewRenewal(store, notifier, nil)
 	rn.now = func() time.Time { return now.Add(7*time.Hour + 46*time.Minute) }
 	rn.check()
 
@@ -72,7 +72,7 @@ func TestRenewalPreservesOriginalStartedAt(t *testing.T) {
 			capturedStartedAt = startedAt
 		},
 	}
-	rn := NewRenewal(store, notifier)
+	rn := NewRenewal(store, notifier, nil)
 	rn.now = func() time.Time { return now }
 	rn.check()
 
