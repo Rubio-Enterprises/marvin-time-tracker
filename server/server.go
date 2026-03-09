@@ -27,6 +27,7 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 	mux.HandleFunc("POST /webhook/start", wh.HandleStart)
 	mux.HandleFunc("POST /webhook/stop", wh.HandleStop)
 	mux.HandleFunc("POST /register", rh.Handle)
+	mux.HandleFunc("GET /userscript/marvin-relay-tracker.user.js", userscriptHandler(so.externalURL))
 
 	if so.history != nil {
 		mux.HandleFunc("GET /history", historyHandler(so.history))
@@ -56,9 +57,10 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 }
 
 type serverOptions struct {
-	marvin  MarvinAPIClient
-	broker  *Broker
-	history *HistoryStore
+	marvin      MarvinAPIClient
+	broker      *Broker
+	history     *HistoryStore
+	externalURL string
 }
 
 type ServerOption func(*serverOptions)
@@ -78,6 +80,12 @@ func WithMarvinClient(mc MarvinAPIClient) ServerOption {
 func WithHistory(h *HistoryStore) ServerOption {
 	return func(so *serverOptions) {
 		so.history = h
+	}
+}
+
+func WithExternalURL(url string) ServerOption {
+	return func(so *serverOptions) {
+		so.externalURL = url
 	}
 }
 

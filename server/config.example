@@ -22,6 +22,10 @@ LISTEN_ADDR = :8080
 # Dev: ./state.json | Homebrew: /opt/homebrew/var/marvin-relay/state.json
 STATE_FILE_PATH = ./state.json
 
+# Public URL for userscript @updateURL/@downloadURL rewriting
+# (e.g., https://relay.example.com). If empty, auto-update URLs are left as placeholders.
+# EXTERNAL_URL = https://relay.example.com
+
 # Polling (fallback for unreliable webhooks)
 # Set to false to use webhooks only
 POLL_ENABLED = true

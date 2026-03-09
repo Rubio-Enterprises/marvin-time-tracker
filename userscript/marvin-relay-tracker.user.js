@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         Marvin Relay Tracker
 // @namespace    com.strubio.marvin-relay-tracker
-// @version      0.2.0
+// @version      0.3.0
 // @description  Overlay tracking controls on Amazing Marvin, synced with relay server via SSE
+// @updateURL    __RELAY_URL__/userscript/marvin-relay-tracker.user.js
+// @downloadURL  __RELAY_URL__/userscript/marvin-relay-tracker.user.js
 // @match        https://app.amazingmarvin.com/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_addStyle

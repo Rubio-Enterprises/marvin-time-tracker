@@ -20,10 +20,30 @@ When tracking is stopped from the iOS app, the Marvin web UI still shows trackin
 ## Installation
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/) (Chrome/Firefox/Safari/Edge)
-2. Open the userscript file `marvin-relay-tracker.user.js`
-3. Tampermonkey should detect it and offer to install — click **Install**
+2. Navigate to `http://<your-relay-server>/userscript/marvin-relay-tracker.user.js` — Tampermonkey intercepts `.user.js` URLs and offers to install
+3. Click **Install**
 4. Navigate to `https://app.amazingmarvin.com`
 5. The "Relay Tracker" panel appears in the bottom-right corner
+
+Alternatively, open the `marvin-relay-tracker.user.js` file directly and drag it into the Tampermonkey dashboard.
+
+## Updating
+
+### Auto-update (recommended)
+
+When the relay server has `EXTERNAL_URL` configured, the served script includes `@updateURL` and `@downloadURL` metadata pointing back to the server. Tampermonkey periodically checks these URLs and prompts you when a new version is available.
+
+To adjust the check interval: Tampermonkey Dashboard → Settings → Script Update → **Check Interval**.
+
+### One-click update
+
+Bookmark the install URL (`http://<your-relay-server>/userscript/marvin-relay-tracker.user.js`). When a new version is deployed, visit the bookmark — Tampermonkey detects the higher `@version` and offers to update.
+
+### Manual update
+
+Open Tampermonkey Dashboard → select "Marvin Relay Tracker" → paste the new script content → **Save**.
+
+> **Note:** Tampermonkey only triggers an update when `@version` increases. Each userscript change requires a version bump to be picked up.
 
 ## Configuration
 

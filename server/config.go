@@ -21,6 +21,7 @@ type Config struct {
 	PollEnabled        bool
 	PollIntervalActive time.Duration
 	PollIntervalIdle   time.Duration
+	ExternalURL        string
 }
 
 // LoadConfig builds a Config by layering (lowest to highest priority):
@@ -61,6 +62,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		PollEnabled:        getOrDefault(get, "POLL_ENABLED", "true") == "true",
 		PollIntervalActive: parseDuration(get("POLL_INTERVAL_ACTIVE"), 30*time.Second),
 		PollIntervalIdle:   parseDuration(get("POLL_INTERVAL_IDLE"), 5*time.Minute),
+		ExternalURL:        get("EXTERNAL_URL"),
 	}
 
 	return cfg, nil

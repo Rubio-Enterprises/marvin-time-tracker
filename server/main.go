@@ -66,7 +66,7 @@ func main() {
 	renewal.Start()
 	log.Printf("renewal monitor started")
 
-	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history))
+	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history), WithExternalURL(cfg.ExternalURL))
 
 	log.Printf("listening on %s", cfg.ListenAddr)
 	if err := http.ListenAndServe(cfg.ListenAddr, srv); err != nil {
