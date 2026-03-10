@@ -19,6 +19,7 @@ type Config struct {
 	ListenAddr         string
 	ExternalURL        string
 	APIKey             string
+	APNsEnv            string
 	Debug              bool
 }
 
@@ -59,6 +60,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		ListenAddr:         getOrDefault(get, "LISTEN_ADDR", ":8080"),
 		ExternalURL:        get("EXTERNAL_URL"),
 		APIKey:             get("API_KEY"),
+		APNsEnv:            getOrDefault(get, "APNS_ENV", "development"),
 		Debug:              get("MARVIN_DEBUG") == "true" || get("MARVIN_DEBUG") == "1",
 	}
 

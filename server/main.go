@@ -40,12 +40,12 @@ func main() {
 	// Initialize APNs notifier if configured
 	var notifier Notifier
 	if cfg.APNsKeyID != "" && cfg.APNsTeamID != "" && cfg.APNsPrivateKeyPath != "" {
-		apnsClient, err := NewAPNsClient(cfg.APNsPrivateKeyPath, cfg.APNsKeyID, cfg.APNsTeamID, cfg.APNsBundleID)
+		apnsClient, err := NewAPNsClient(cfg.APNsPrivateKeyPath, cfg.APNsKeyID, cfg.APNsTeamID, cfg.APNsBundleID, cfg.APNsEnv)
 		if err != nil {
 			log.Fatalf("APNs init error: %v", err)
 		}
 		notifier = apnsClient
-		log.Printf("APNs client initialized (%s)", apnsEnv)
+		log.Printf("APNs client initialized (%s)", cfg.APNsEnv)
 	} else {
 		log.Printf("APNs not configured, push notifications disabled")
 	}
