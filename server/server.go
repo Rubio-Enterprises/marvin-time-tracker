@@ -19,8 +19,19 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 		o(so)
 	}
 
-	wh := NewWebhookHandler(store, dedup, notifier, so.broker, so.history, so.debug)
-	rh := NewRegisterHandler(store, notifier, so.broker)
+	// Convert concrete nil pointers to proper nil interfaces to avoid
+	// non-nil interface wrapping nil pointer issues.
+	var broker BrokerPublisher
+	if so.broker != nil {
+		broker = so.broker
+	}
+	var history SessionRecorder
+	if so.history != nil {
+		history = so.history
+	}
+
+	wh := NewWebhookHandler(store, dedup, notifier, broker, history, so.debug)
+	rh := NewRegisterHandler(store, notifier, broker)
 
 	auth := func(h http.HandlerFunc) http.HandlerFunc {
 		return requireAPIKey(so.apiKey, h)
@@ -42,7 +53,7 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 	}
 
 	if so.marvin != nil {
-		th := NewTrackHandler(store, so.marvin, notifier, so.broker, so.history)
+		th := NewTrackHandler(store, so.marvin, notifier, broker, history)
 		mux.HandleFunc("POST /start", auth(th.HandleStart))
 		mux.HandleFunc("POST /stop", auth(th.HandleStop))
 		mux.HandleFunc("GET /tasks", auth(tasksHandler(so.marvin)))
@@ -63,7 +74,7 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 
 type serverOptions struct {
 	marvin      MarvinAPIClient
-	broker      *Broker
+	broker      *Broker // concrete type needed for SSE handler's Subscribe()
 	history     *HistoryStore
 	externalURL string
 	apiKey      string

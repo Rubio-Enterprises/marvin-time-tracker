@@ -19,12 +19,12 @@ type WebhookHandler struct {
 	store    *StateStore
 	dedup    *DedupCache
 	notifier Notifier
-	broker   *Broker
-	history  *HistoryStore
+	broker   BrokerPublisher
+	history  SessionRecorder
 	debug    bool
 }
 
-func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier, broker *Broker, history *HistoryStore, debug bool) *WebhookHandler {
+func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier, broker BrokerPublisher, history SessionRecorder, debug bool) *WebhookHandler {
 	return &WebhookHandler{
 		store:    store,
 		dedup:    dedup,

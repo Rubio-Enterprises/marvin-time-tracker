@@ -6,6 +6,12 @@ import (
 	"sync"
 )
 
+// SessionRecorder is the interface for recording completed tracking sessions.
+type SessionRecorder interface {
+	Add(record SessionRecord) error
+	Recent(n int) []SessionRecord
+}
+
 type SessionRecord struct {
 	TaskID    string `json:"taskId"`
 	Title     string `json:"title"`

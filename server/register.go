@@ -15,10 +15,10 @@ type registerPayload struct {
 type RegisterHandler struct {
 	store    *StateStore
 	notifier Notifier
-	broker   *Broker
+	broker   BrokerPublisher
 }
 
-func NewRegisterHandler(store *StateStore, notifier Notifier, broker *Broker) *RegisterHandler {
+func NewRegisterHandler(store *StateStore, notifier Notifier, broker BrokerPublisher) *RegisterHandler {
 	return &RegisterHandler{store: store, notifier: notifier, broker: broker}
 }
 

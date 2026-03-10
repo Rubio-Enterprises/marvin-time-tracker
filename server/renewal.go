@@ -11,14 +11,14 @@ const renewalThreshold = 7*time.Hour + 45*time.Minute
 type Renewal struct {
 	store    *StateStore
 	notifier Notifier
-	broker   *Broker
+	broker   BrokerPublisher
 	stop     chan struct{}
 	ctx      context.Context
 	cancel   context.CancelFunc
 	now      func() time.Time // for testing
 }
 
-func NewRenewal(store *StateStore, notifier Notifier, broker *Broker) *Renewal {
+func NewRenewal(store *StateStore, notifier Notifier, broker BrokerPublisher) *Renewal {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Renewal{
 		store:    store,

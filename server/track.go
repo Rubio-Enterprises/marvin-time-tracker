@@ -21,11 +21,11 @@ type TrackHandler struct {
 	store    *StateStore
 	marvin   MarvinAPIClient
 	notifier Notifier
-	broker   *Broker
-	history  *HistoryStore
+	broker   BrokerPublisher
+	history  SessionRecorder
 }
 
-func NewTrackHandler(store *StateStore, marvin MarvinAPIClient, notifier Notifier, broker *Broker, history *HistoryStore) *TrackHandler {
+func NewTrackHandler(store *StateStore, marvin MarvinAPIClient, notifier Notifier, broker BrokerPublisher, history SessionRecorder) *TrackHandler {
 	return &TrackHandler{
 		store:    store,
 		marvin:   marvin,
