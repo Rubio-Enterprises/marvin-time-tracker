@@ -46,7 +46,7 @@ bump-userscript part='patch':
     #!/usr/bin/env bash
     set -euo pipefail
     file="userscript/marvin-relay-tracker.user.js"
-    old=$(grep -oP '@version\s+\K\S+' "$file")
+    old=$(sed -n 's/.*@version[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$file")
     IFS='.' read -r major minor patch <<< "$old"
     case "{{part}}" in
         patch) patch=$((patch + 1)) ;;
@@ -55,7 +55,7 @@ bump-userscript part='patch':
         *) echo "Unknown part '{{part}}'. Use: patch, minor, or major"; exit 1 ;;
     esac
     new="${major}.${minor}.${patch}"
-    sed -i "s/@version\s\+${old}/@version      ${new}/" "$file"
+    sed -i'' -e "s/@version[[:space:]]*${old}/@version      ${new}/" "$file"
     echo "userscript: ${old} → ${new}"
 
 # Bump version, update changelog, tag, and push (use --dry-run to preview)
