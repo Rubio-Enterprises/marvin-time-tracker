@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.5.1](https://github.com/strubio-ray/marvin-time-tracker/compare/3aa75fa5a0fe94dc66e2dc84491716477d52e120..v1.5.1) - 2026-03-10
+#### Bug Fixes
+- (**ios**) add missing info.path for XcodeGen 2.45 compatibility - ([3aa75fa](https://github.com/strubio-ray/marvin-time-tracker/commit/3aa75fa5a0fe94dc66e2dc84491716477d52e120)) - Steven
+
+- - -
+
 ## [v1.5.0](https://github.com/strubio-ray/marvin-time-tracker/compare/58199e077ae79d5d26c3c86025e015b9a67e2138..v1.5.0) - 2026-03-10
 #### Features
 - add API key auth and tasks endpoint - ([a25606a](https://github.com/strubio-ray/marvin-time-tracker/commit/a25606a81897d1af0bd2af758713225cdc53b62e)) - Steven
