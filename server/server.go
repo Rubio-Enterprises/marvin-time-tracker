@@ -19,7 +19,7 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 		o(so)
 	}
 
-	wh := NewWebhookHandler(store, dedup, notifier, so.broker, so.history)
+	wh := NewWebhookHandler(store, dedup, notifier, so.broker, so.history, so.debug)
 	rh := NewRegisterHandler(store, notifier, so.broker)
 
 	auth := func(h http.HandlerFunc) http.HandlerFunc {
@@ -67,6 +67,7 @@ type serverOptions struct {
 	history     *HistoryStore
 	externalURL string
 	apiKey      string
+	debug       bool
 }
 
 type ServerOption func(*serverOptions)
@@ -98,6 +99,12 @@ func WithExternalURL(url string) ServerOption {
 func WithAPIKey(key string) ServerOption {
 	return func(so *serverOptions) {
 		so.apiKey = key
+	}
+}
+
+func WithDebug(debug bool) ServerOption {
+	return func(so *serverOptions) {
+		so.debug = debug
 	}
 }
 

@@ -63,7 +63,7 @@ func main() {
 		log.Printf("WARNING: API_KEY not set, app endpoints are unprotected")
 	}
 
-	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history), WithExternalURL(cfg.ExternalURL), WithAPIKey(cfg.APIKey))
+	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history), WithExternalURL(cfg.ExternalURL), WithAPIKey(cfg.APIKey), WithDebug(cfg.Debug))
 
 	httpServer := &http.Server{
 		Addr:              cfg.ListenAddr,

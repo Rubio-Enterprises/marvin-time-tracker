@@ -21,15 +21,17 @@ type WebhookHandler struct {
 	notifier Notifier
 	broker   *Broker
 	history  *HistoryStore
+	debug    bool
 }
 
-func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier, broker *Broker, history *HistoryStore) *WebhookHandler {
+func NewWebhookHandler(store *StateStore, dedup *DedupCache, notifier Notifier, broker *Broker, history *HistoryStore, debug bool) *WebhookHandler {
 	return &WebhookHandler{
 		store:    store,
 		dedup:    dedup,
 		notifier: notifier,
 		broker:   broker,
 		history:  history,
+		debug:    debug,
 	}
 }
 
@@ -43,7 +45,9 @@ func (wh *WebhookHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 		log.Printf("webhook/start: failed to read body: %v", err)
 		return
 	}
-	log.Printf("webhook/start: raw body: %s", string(body))
+	if wh.debug {
+		log.Printf("webhook/start: raw body: %s", string(body))
+	}
 
 	var payload webhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
@@ -98,7 +102,9 @@ func (wh *WebhookHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 		log.Printf("webhook/stop: failed to read body: %v", err)
 		return
 	}
-	log.Printf("webhook/stop: raw body: %s", string(body))
+	if wh.debug {
+		log.Printf("webhook/stop: raw body: %s", string(body))
+	}
 
 	var payload webhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {

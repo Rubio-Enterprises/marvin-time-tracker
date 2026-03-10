@@ -19,6 +19,7 @@ type Config struct {
 	ListenAddr         string
 	ExternalURL        string
 	APIKey             string
+	Debug              bool
 }
 
 // LoadConfig builds a Config by layering (lowest to highest priority):
@@ -58,6 +59,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		ListenAddr:         getOrDefault(get, "LISTEN_ADDR", ":8080"),
 		ExternalURL:        get("EXTERNAL_URL"),
 		APIKey:             get("API_KEY"),
+		Debug:              get("MARVIN_DEBUG") == "true" || get("MARVIN_DEBUG") == "1",
 	}
 
 	return cfg, nil
