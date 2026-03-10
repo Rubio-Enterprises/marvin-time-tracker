@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Marvin Relay Tracker
 // @namespace    com.strubio.marvin-relay-tracker
-// @version      0.5.0
+// @version      0.6.0
 // @description  Overlay tracking controls on Amazing Marvin, synced with relay server via SSE
 // @updateURL    __RELAY_URL__/userscript/marvin-relay-tracker.user.js
 // @downloadURL  __RELAY_URL__/userscript/marvin-relay-tracker.user.js
@@ -44,6 +44,12 @@
     async setConnected(val) {
       await GM_setValue('connected', val);
     },
+    async getApiKey() {
+      return await GM_getValue('apiKey', '');
+    },
+    async setApiKey(key) {
+      await GM_setValue('apiKey', key);
+    },
     async isFirstRun() {
       const url = await GM_getValue('relayUrl', null);
       return url === null;
@@ -55,12 +61,17 @@
   const API = (() => {
     let pending = false;
 
-    function gmRequest(method, url, data) {
+    async function gmRequest(method, url, data) {
+      const apiKey = await Config.getApiKey();
+      const headers = {
+        ...(data ? { 'Content-Type': 'application/json' } : {}),
+        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+      };
       return new Promise((resolve, reject) => {
         GM.xmlHttpRequest({
           method,
           url,
-          headers: data ? { 'Content-Type': 'application/json' } : undefined,
+          headers: Object.keys(headers).length > 0 ? headers : undefined,
           data: data ? JSON.stringify(data) : undefined,
           timeout: 15000,
           onload(resp) {
@@ -225,13 +236,15 @@
   // === SSE ===
 
   const SSE = (() => {
-    let eventSource = null;
+    let sseRequest = null;
     let reconnectTimer = null;
+    let refreshTimer = null;
     let reconnectAttempt = 0;
     let intentionalDisconnect = false;
 
     const BASE_DELAY = 1000;
     const MAX_DELAY = 30000;
+    const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes — reconnect to clear responseText buffer
 
     function getReconnectDelay() {
       return Math.min(BASE_DELAY * Math.pow(2, reconnectAttempt), MAX_DELAY);
@@ -248,6 +261,41 @@
       }, delay);
     }
 
+    function handleSSEEvent(eventType, data) {
+      try {
+        if (eventType === 'state') {
+          const parsed = JSON.parse(data);
+          State.update({
+            tracking: parsed.tracking,
+            taskId: parsed.taskId || null,
+            taskTitle: parsed.taskTitle || null,
+            startedAt: parsed.startedAt || null,
+          });
+        } else if (eventType === 'tracking_started') {
+          const parsed = JSON.parse(data);
+          State.update({
+            tracking: true,
+            taskId: parsed.taskId || null,
+            taskTitle: parsed.taskTitle || null,
+            startedAt: parsed.startedAt || null,
+          });
+        } else if (eventType === 'tracking_stopped') {
+          State.update({ tracking: false });
+        }
+      } catch { /* ignore parse errors */ }
+    }
+
+    function closeSSE() {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+      }
+      if (sseRequest && sseRequest.abort) {
+        sseRequest.abort();
+        sseRequest = null;
+      }
+    }
+
     async function connectInternal() {
       if (intentionalDisconnect) return;
 
@@ -259,7 +307,6 @@
       // Health check before opening SSE
       try {
         const status = await API.getStatus();
-        // Apply initial state from health check
         State.update({
           tracking: status.tracking,
           taskId: status.taskId || null,
@@ -268,7 +315,6 @@
         });
       } catch (err) {
         if (reconnectAttempt === 0) {
-          // First attempt — show error toast
           Toast.show(`Cannot reach server: ${err.message}`, 'error');
         }
         scheduleReconnect();
@@ -276,62 +322,98 @@
       }
 
       const url = await Config.getRelayUrl();
+      const apiKey = await Config.getApiKey();
+
+      // SSE parser state
+      let lastIndex = 0;
+      let buffer = '';
+      let currentEvent = { type: 'message', data: '' };
+      let connected = false;
+
+      const headers = {
+        'Accept': 'text/event-stream',
+        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+      };
 
       try {
-        eventSource = new EventSource(`${url}/events`);
+        sseRequest = GM.xmlHttpRequest({
+          method: 'GET',
+          url: `${url}/events`,
+          headers,
+          responseType: 'text',
+          onprogress(response) {
+            if (!connected) {
+              connected = true;
+              const wasReconnecting = reconnectAttempt > 0;
+              State.setConnectionState('connected');
+              reconnectAttempt = 0;
+              if (wasReconnecting) {
+                Toast.show('Reconnected to server', 'success', 3000);
+              }
+            }
+
+            const newData = response.responseText.substring(lastIndex);
+            lastIndex = response.responseText.length;
+            buffer += newData;
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // keep incomplete last line
+
+            for (const line of lines) {
+              if (line.startsWith('event: ')) {
+                currentEvent.type = line.substring(7);
+              } else if (line.startsWith('data: ')) {
+                currentEvent.data = line.substring(6);
+              } else if (line === '') {
+                // Empty line = end of event
+                if (currentEvent.data) {
+                  handleSSEEvent(currentEvent.type, currentEvent.data);
+                }
+                currentEvent = { type: 'message', data: '' };
+              }
+              // Lines starting with ':' are comments (keepalive) — ignore
+            }
+          },
+          onload() {
+            // Connection closed by server
+            sseRequest = null;
+            if (!intentionalDisconnect) {
+              if (State.isConnected()) {
+                Toast.show('Connection lost, reconnecting...', 'warning');
+              }
+              scheduleReconnect();
+            }
+          },
+          onerror(err) {
+            sseRequest = null;
+            if (intentionalDisconnect) return;
+            if (reconnectAttempt === 0 && !connected) {
+              Toast.show(`SSE connection failed: ${err.error || 'Network error'}`, 'error');
+            } else if (State.isConnected()) {
+              Toast.show('Connection lost, reconnecting...', 'warning');
+            }
+            scheduleReconnect();
+          },
+          ontimeout() {
+            sseRequest = null;
+            if (!intentionalDisconnect) {
+              scheduleReconnect();
+            }
+          },
+        });
       } catch {
         scheduleReconnect();
         return;
       }
 
-      eventSource.addEventListener('state', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          State.update({
-            tracking: data.tracking,
-            taskId: data.taskId || null,
-            taskTitle: data.taskTitle || null,
-            startedAt: data.startedAt || null,
-          });
-        } catch { /* ignore parse errors */ }
-      });
-
-      eventSource.addEventListener('tracking_started', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          State.update({
-            tracking: true,
-            taskId: data.taskId || null,
-            taskTitle: data.taskTitle || null,
-            startedAt: data.startedAt || null,
-          });
-        } catch { /* ignore */ }
-      });
-
-      eventSource.addEventListener('tracking_stopped', () => {
-        State.update({ tracking: false });
-      });
-
-      eventSource.onopen = () => {
-        const wasReconnecting = reconnectAttempt > 0;
-        State.setConnectionState('connected');
-        reconnectAttempt = 0;
-        if (wasReconnecting) {
-          Toast.show('Reconnected to server', 'success', 3000);
+      // Schedule periodic refresh to clear growing responseText buffer
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        if (!intentionalDisconnect && State.isConnected()) {
+          closeSSE();
+          connectInternal();
         }
-      };
-
-      eventSource.onerror = () => {
-        if (intentionalDisconnect) return;
-        if (State.isConnected()) {
-          Toast.show('Connection lost, reconnecting...', 'warning');
-        }
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-        scheduleReconnect();
-      };
+      }, REFRESH_INTERVAL);
     }
 
     return {
@@ -347,10 +429,7 @@
           clearTimeout(reconnectTimer);
           reconnectTimer = null;
         }
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
+        closeSSE();
         reconnectAttempt = 0;
         State.setConnectionState('disconnected');
       },
@@ -692,6 +771,8 @@
             <label>Relay Server URL</label>
             <input type="text" class="relay-url" placeholder="http://localhost:8080">
             <div class="url-error">Invalid URL format</div>
+            <label>API Key</label>
+            <input type="text" class="api-key" placeholder="Bearer token for server auth">
             <div class="checkbox-row">
               <input type="checkbox" class="hide-native" id="mrt-hide-native">
               <label for="mrt-hide-native">Hide native tracking buttons</label>
@@ -720,6 +801,7 @@
         collapseToggle: panel.querySelector('.collapse-toggle'),
         relayUrl: panel.querySelector('.relay-url'),
         urlError: panel.querySelector('.url-error'),
+        apiKey: panel.querySelector('.api-key'),
         hideNative: panel.querySelector('.hide-native'),
       };
 
@@ -786,6 +868,22 @@
           elements.relayUrl.classList.remove('input-error');
           elements.urlError.classList.remove('visible');
           await Config.setRelayUrl(url);
+
+          // Reconnect if currently connected
+          const current = State.get();
+          if (current.connectionState !== 'disconnected') {
+            SSE.disconnect();
+            SSE.connect();
+          }
+        }, 800);
+      });
+
+      let apiKeyTimeout = null;
+      elements.apiKey.addEventListener('input', () => {
+        clearTimeout(apiKeyTimeout);
+        apiKeyTimeout = setTimeout(async () => {
+          const key = elements.apiKey.value.trim();
+          await Config.setApiKey(key);
 
           // Reconnect if currently connected
           const current = State.get();
@@ -958,6 +1056,7 @@
 
         // Load settings
         elements.relayUrl.value = await Config.getRelayUrl();
+        elements.apiKey.value = await Config.getApiKey();
         elements.hideNative.checked = await Config.getHideNative();
 
         // Show settings if first run
