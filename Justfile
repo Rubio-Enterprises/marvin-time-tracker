@@ -42,3 +42,7 @@ ios-deploy:
 # Build and upload to TestFlight
 ios-testflight:
     cd ios && bundle exec fastlane testflight_release
+
+# Bump version, update changelog, tag, and push (use --dry-run to preview)
+release *ARGS='--auto':
+    cog bump {{ARGS}}
