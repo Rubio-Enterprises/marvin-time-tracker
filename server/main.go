@@ -9,9 +9,11 @@ import (
 	"time"
 )
 
+var version = "dev"
+
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
-		fmt.Println("marvin-relay 0.1.0")
+		fmt.Println("marvin-relay " + version)
 		os.Exit(0)
 	}
 
