@@ -43,6 +43,43 @@ bundle exec fastlane setup
 open MarvinTimeTracker.xcodeproj
 ```
 
+## Releasing a New Version
+
+Pushing a tag triggers the full release pipeline — Homebrew formula, server binary, and userscript are all updated automatically.
+
+### 1. Tag and push
+
+```bash
+git tag v1.2.0
+git push --tags
+```
+
+The `bump-homebrew.yml` workflow runs automatically, updating the formula's `url` and `sha256` in the [Homebrew tap](https://github.com/strubio-ray/homebrew-tap). The formula uses `#{version}` in ldflags and the test block, so those stay in sync with no manual edits.
+
+### 2. Update the server
+
+On the machine running the relay server:
+
+```bash
+brew update
+brew upgrade marvin-relay
+brew services restart marvin-relay
+```
+
+The new binary includes the updated userscript via `go:embed`.
+
+### 3. Userscript updates
+
+Once the server restarts, it serves the latest userscript at `/userscript/marvin-relay-tracker.user.js`. Tampermonkey auto-detects the new `@version` via `@updateURL` and prompts to update (requires `EXTERNAL_URL` to be set in the server config).
+
+See [userscript/README.md](userscript/README.md) for more details on update methods and first-time install.
+
+### Prerequisites
+
+- `HOMEBREW_TAP_TOKEN` secret in this repo — a fine-grained PAT scoped to the tap repo with `Contents: Read and write`
+- `EXTERNAL_URL` in the server config — for userscript auto-update URL rewriting
+- Bump `@version` in `userscript/marvin-relay-tracker.user.js` when the userscript changes
+
 ## Requirements
 
 - Go 1.22+
