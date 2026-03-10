@@ -903,6 +903,13 @@
           if (el) el.textContent = formatElapsed(state.startedAt);
         }, 1000);
         rebindConnectToggle();
+
+        // Auto-expand panel when tracking starts
+        if (elements.body.classList.contains('hidden')) {
+          elements.body.classList.remove('hidden');
+          elements.collapseToggle.innerHTML = '&#9660;';
+          Config.setCollapsed(false);
+        }
       } else {
         // Connected but idle
         elements.status.className = 'status idle';

@@ -111,6 +111,7 @@ func (p *Poller) poll() {
 			s.TrackingTaskID = item.TaskID
 			s.TaskTitle = item.Title
 			s.StartedAt = item.StartedAt
+			s.Times = []int64{item.StartedAt}
 			s.LiveActivityStartedAt = time.Now()
 		})
 

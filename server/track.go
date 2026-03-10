@@ -69,6 +69,7 @@ func (th *TrackHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 		s.TrackingTaskID = req.TaskID
 		s.TaskTitle = req.Title
 		s.StartedAt = startedAt
+		s.Times = []int64{startedAt}
 		s.LiveActivityStartedAt = now
 		s.LastStoppedTaskID = ""
 	})
