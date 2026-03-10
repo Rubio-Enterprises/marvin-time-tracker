@@ -45,6 +45,7 @@ type stopRequest struct {
 }
 
 func (th *TrackHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	var req startRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
@@ -82,6 +83,7 @@ func (th *TrackHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 }
 
 func (th *TrackHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	var req stopRequest
 	// Body is optional for stop
 	json.NewDecoder(r.Body).Decode(&req)

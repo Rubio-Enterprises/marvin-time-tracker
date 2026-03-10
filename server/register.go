@@ -23,6 +23,7 @@ func NewRegisterHandler(store *StateStore, notifier Notifier, broker *Broker) *R
 }
 
 func (rh *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var payload registerPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)

@@ -37,6 +37,7 @@ func (wh *WebhookHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 	// Acknowledge immediately
 	w.WriteHeader(http.StatusOK)
 
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("webhook/start: failed to read body: %v", err)
@@ -91,6 +92,7 @@ func (wh *WebhookHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 func (wh *WebhookHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("webhook/stop: failed to read body: %v", err)

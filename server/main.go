@@ -65,8 +65,15 @@ func main() {
 
 	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history), WithExternalURL(cfg.ExternalURL), WithAPIKey(cfg.APIKey))
 
+	httpServer := &http.Server{
+		Addr:              cfg.ListenAddr,
+		Handler:           srv,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 	log.Printf("listening on %s", cfg.ListenAddr)
-	if err := http.ListenAndServe(cfg.ListenAddr, srv); err != nil {
+	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }
