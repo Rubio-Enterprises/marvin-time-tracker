@@ -70,9 +70,11 @@ The new binary includes the updated userscript via `go:embed`.
 
 ### 3. Userscript updates
 
-Once the server restarts, it serves the latest userscript at `/userscript/marvin-relay-tracker.user.js`. Tampermonkey auto-detects the new `@version` via `@updateURL` and prompts to update (requires `EXTERNAL_URL` to be set in the server config).
+Once the server restarts, it serves the latest userscript at `/userscript/marvin-relay-tracker.user.js`. The userscript is embedded in the binary via `go:embed`, so every server release serves the latest version automatically.
 
-See [userscript/README.md](userscript/README.md) for more details on update methods and first-time install.
+However, **Tampermonkey only detects an update when `@version` increases**. If a release only changes server-side code and not the userscript, Tampermonkey correctly sees no update. When the userscript itself changes, bump `@version` in `userscript/marvin-relay-tracker.user.js` before tagging — otherwise Tampermonkey will offer a reinstall instead of an update.
+
+Auto-update requires `EXTERNAL_URL` to be set in the server config. See [userscript/README.md](userscript/README.md) for more details on update methods and first-time install.
 
 ### Prerequisites
 
