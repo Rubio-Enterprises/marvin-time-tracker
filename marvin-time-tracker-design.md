@@ -9,7 +9,7 @@ A minimal iOS app (SwiftUI, iOS 18+) that surfaces a live timer via Live Activit
 - **Live Activity is the product** — the app itself is a thin launcher
 - **Timer-only V1** — no task management, no browsing, no inbox
 - **Portable server** — single Go binary, deploy anywhere
-- **Reliability through redundancy** — webhooks first, adaptive polling as fallback
+- **Webhook-driven** — Marvin webhooks trigger all state transitions
 
 ### Targets
 
@@ -30,7 +30,6 @@ Marvin Client (web/desktop/mobile)
 Go Relay Server (single binary)
     |
     |-- Dedup + authoritative state machine (JSON file)
-    |-- Adaptive fallback polling (time.Ticker)
     |-- sideshow/apns2 (HTTP/2 + JWT)
     |
     | (on state change)
@@ -89,12 +88,6 @@ Marvin webhooks are client-side AJAX. The server must return:
 ```
          webhook:start          webhook:stop
   IDLE -----------------> TRACKING -----------------> IDLE
-   ^                         |                          |
-   |                         | poll confirms stopped    |
-   '-------------------------'                          |
-   |                                                    |
-   '----------------------------------------------------'
-              poll confirms no tracked item
 ```
 
 State stored as a JSON file with atomic rename:
@@ -107,7 +100,6 @@ State stored as a JSON file with atomic rename:
   "pushToStartToken": "<hex>",
   "updateToken": "<hex>",
   "liveActivityStartedAt": "2026-03-05T10:00:13Z",
-  "lastPollAt": "2026-03-05T10:05:00Z",
   "lastWebhookAt": "2026-03-05T10:00:13Z"
 }
 ```
@@ -122,19 +114,6 @@ State stored as a JSON file with atomic rename:
 6. If state changed: send ActivityKit push via APNs
 7. If start: push-to-start or update Live Activity with `startedAt` timestamp
 8. If stop: end Live Activity with final elapsed time
-
-### Adaptive Fallback Polling
-
-Polls `GET /api/trackedItem` from the Marvin API. Adapts frequency based on context:
-
-| Context | Poll Interval | Daily Budget Impact |
-|---|---|---|
-| Active tracking (timer running) | Every 30-60 seconds | ~48-120 calls/active hour |
-| Idle (no tracking) | Every 5-10 minutes | ~144-288 calls/day |
-| Quiet hours (configurable) | Every 30 minutes | ~16 calls/night |
-| After webhook received | Skip next scheduled poll | Saves ~1 call/event |
-
-A quota-aware budget manager tracks calls consumed against the 1,440/day limit. Reserves 5% for emergencies. Distributes remaining calls over remaining hours to prevent morning exhaustion.
 
 ### APNs Integration
 
@@ -168,11 +147,9 @@ All via environment variables:
 | `APNS_TEAM_ID` | Apple Developer Team ID |
 | `APNS_KEY_P8_PATH` | Path to `.p8` key file |
 | `APNS_BUNDLE_ID` | iOS app bundle identifier |
-| `MARVIN_API_TOKEN` | Marvin API token for fallback polling |
+| `MARVIN_API_TOKEN` | Marvin API token |
 | `STATE_FILE_PATH` | Path to JSON state file (default: `./state.json`) |
 | `LISTEN_ADDR` | Server listen address (default: `:8080`) |
-| `POLL_INTERVAL_ACTIVE` | Polling interval during tracking (default: `30s`) |
-| `POLL_INTERVAL_IDLE` | Polling interval when idle (default: `5m`) |
 
 ### Deployment Options
 
@@ -287,9 +264,9 @@ struct TimeTrackerAttributes: ActivityAttributes {
 
 ### App Lifecycle
 
-- **Foreground (`scenePhase == .active`):** Poll `GET /api/trackedItem` to reconcile state. If tracking started/stopped externally, update UI.
+- **Foreground (`scenePhase == .active`):** Reconcile state with server. If tracking started/stopped externally, update UI.
 - **Background:** Live Activity + push handles everything. App does nothing.
-- **Force-quit recovery:** Go server detects tracking is still active via polling, sends regular APNs alert: "Your timer is still running — tap to restore." User opens app, new Live Activity starts in-app.
+- **Force-quit recovery:** Go server sends regular APNs alert: "Your timer is still running — tap to restore." User opens app, new Live Activity starts in-app.
 
 ### Offline Handling
 
@@ -336,18 +313,17 @@ System utility aesthetic:
 
 | Endpoint | Used By | Frequency |
 |---|---|---|
-| `GET /api/trackedItem` | Go server (polling) | ~300-700/day |
 | `GET /api/todayItems` | iOS app (on "Start Tracking") | ~5-20/day |
 | `POST /api/track` | iOS app (start/stop) | ~5-10/day |
 | `GET /api/me` | iOS app (token validation) | ~1-2/day |
-| **Total** | | **~310-730/day** (under 1,440 cap) |
+| **Total** | | **~11-32/day** |
 
 ### Rate Limits
 
 | Limit | Value | Impact |
 |---|---|---|
-| Queries (burst) | 1 every 3 seconds | Server polling respects this |
-| Queries (daily) | 1,440/day | Budget manager prevents exhaustion |
+| Queries (burst) | 1 every 3 seconds | Not a concern with webhook-only approach |
+| Queries (daily) | 1,440/day | Not a concern with webhook-only approach |
 | Item creation | 1/second | Not applicable to V1 |
 
 ### Webhook Events Used
@@ -365,13 +341,12 @@ Separate URLs per event (recommended) since payloads contain no event type field
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Webhook delivery failures (silent, client-side) | Medium | Adaptive fallback polling catches missed events within 30-60s |
+| Webhook delivery failures (silent, client-side) | Low | Rare in practice; manual stop available via app |
 | Live Activity 8-hour cap | Low | Pre-emptive renewal at 7h45m via push-to-start |
-| Marvin API rate limit exhaustion | Low | Quota-aware budget manager, adaptive polling |
 | Push-to-start token not available | Low | In-app start as primary path; regular APNs alert as fallback |
-| Go server downtime | Low | Stateless restart, immediate state reconstruction via API poll |
+| Go server downtime | Low | Stateless restart, state persisted to JSON file |
 | Duplicate webhook deliveries (~9s apart) | Low | Composite dedup key collapses duplicates |
-| Force-quit kills token observation | Low | Server detects via polling, sends regular push to prompt re-open |
+| Force-quit kills token observation | Low | Server sends regular push to prompt re-open |
 
 ---
 

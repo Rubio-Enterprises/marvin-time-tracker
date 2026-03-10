@@ -47,22 +47,20 @@ Version is managed in `ios/version.xcconfig` (`MARKETING_VERSION` and `CURRENT_P
 Single-binary relay server using Go 1.22+ stdlib `net/http` routing. Two external deps: `sideshow/apns2` (APNs push) and `rs/cors`.
 
 Key files and their roles:
-- **`main.go`** — Wires config, state store, dedup, APNs client, poller, renewal, and server
+- **`main.go`** — Wires config, state store, dedup, APNs client, renewal, and server
 - **`server.go`** — HTTP mux setup, CORS config, status endpoint. Uses functional options (`ServerOption`)
 - **`webhook.go`** — Handles `POST /webhook/start` and `/webhook/stop` from Marvin client-side AJAX
 - **`register.go`** — `POST /register` receives push tokens from the iOS app
 - **`track.go`** — `POST /start` and `/stop` for app-initiated tracking via Marvin API
 - **`state.go`** — `StateStore` with JSON file persistence and atomic rename. Holds tracking state + push tokens
 - **`dedup.go`** — Deduplicates Marvin's duplicate webhook firings (~9s apart) using composite key
-- **`poller.go`** — Adaptive fallback polling of Marvin API (`/api/trackedItem`); adjusts interval based on tracking state
-- **`quota.go`** — Daily API call budget manager (1,440/day Marvin limit)
 - **`renewal.go`** — Handles 8-hour Live Activity cap by ending and restarting activities at ~7h45m
 - **`apns.go`** — APNs client wrapper using `sideshow/apns2` with JWT auth
 - **`notifier.go`** — `Notifier` interface abstracting push notification delivery (enables test mocks)
 - **`config.go`** — Environment variable loading with defaults
 - **`marvin.go`** — Marvin API client (`MarvinAPIClient` interface)
 
-State machine: `IDLE <-> TRACKING`, persisted to JSON file. Webhooks are primary; polling is fallback.
+State machine: `IDLE <-> TRACKING`, persisted to JSON file. Webhooks drive state transitions.
 
 ### iOS App (`ios/`)
 
@@ -82,8 +80,6 @@ Watch support is auto-mirrored Live Activities via `.supplementalActivityFamilie
 
 ```
 Marvin Client → webhook → Go Server → APNs → iPhone Live Activity / Watch Smart Stack
-                              ↑
-                    fallback polling of Marvin API
 iOS App → POST /register → Go Server (stores push tokens)
 iOS App → POST /start|/stop → Marvin API (via Go server proxy)
 ```
@@ -93,7 +89,7 @@ iOS App → POST /start|/stop → Marvin API (via Go server proxy)
 Server configured via config file and/or env vars (see `server/config.example`):
 - `MARVIN_API_TOKEN` (required)
 - `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_P8_PATH`, `APNS_BUNDLE_ID`
-- `STATE_FILE_PATH`, `LISTEN_ADDR`, `POLL_INTERVAL_ACTIVE`, `POLL_INTERVAL_IDLE`
+- `STATE_FILE_PATH`, `LISTEN_ADDR`
 
 iOS signing requires:
 - `DEVELOPMENT_TEAM` — Apple Developer Team ID (used in `project.yml`)
@@ -102,7 +98,7 @@ iOS signing requires:
 ## Key Design Decisions
 
 - CORS must return status `200` on OPTIONS (not 204) — Marvin requires this
-- Webhooks are client-side AJAX, so delivery is unreliable; polling provides redundancy
+- Webhooks are client-side AJAX from the Marvin web/desktop app
 - Live Activities have an 8-hour system cap; server auto-renews at 7h45m
 - APNs `liveactivity` push type requires p8 key (not p12)
 - `Notifier` interface in `notifier.go` enables testing without real APNs

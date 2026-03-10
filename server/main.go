@@ -52,16 +52,7 @@ func main() {
 
 	broker := NewBroker()
 
-	// Initialize Marvin client and poller
 	marvin := NewMarvinClient(cfg.MarvinAPIToken, cfg.MarvinFullAccessToken)
-	if cfg.PollEnabled {
-		quota := NewQuotaCounter()
-		poller := NewPoller(marvin, store, notifier, broker, cfg.PollIntervalActive, cfg.PollIntervalIdle, quota)
-		poller.Start()
-		log.Printf("poller started (active=%v, idle=%v)", cfg.PollIntervalActive, cfg.PollIntervalIdle)
-	} else {
-		log.Printf("poller disabled (webhooks only)")
-	}
 
 	// Start 8-hour Live Activity renewal
 	renewal := NewRenewal(store, notifier, broker)

@@ -17,7 +17,6 @@ type State struct {
 	UpdateToken          string    `json:"updateToken,omitempty"`
 	DeviceToken          string    `json:"deviceToken,omitempty"`
 	LiveActivityStartedAt time.Time `json:"liveActivityStartedAt,omitempty"`
-	LastPollAt           time.Time `json:"lastPollAt,omitempty"`
 	LastWebhookAt        time.Time `json:"lastWebhookAt,omitempty"`
 	LastStopAt           time.Time `json:"lastStopAt,omitempty"`
 }

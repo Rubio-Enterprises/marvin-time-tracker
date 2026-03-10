@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
 type Config struct {
@@ -18,9 +17,6 @@ type Config struct {
 	StateFilePath      string
 	HistoryFilePath    string
 	ListenAddr         string
-	PollEnabled        bool
-	PollIntervalActive time.Duration
-	PollIntervalIdle   time.Duration
 	ExternalURL        string
 }
 
@@ -59,9 +55,6 @@ func LoadConfig(configPath string) (*Config, error) {
 		StateFilePath:      getOrDefault(get, "STATE_FILE_PATH", "./state.json"),
 		HistoryFilePath:    getOrDefault(get, "HISTORY_FILE_PATH", "./history.json"),
 		ListenAddr:         getOrDefault(get, "LISTEN_ADDR", ":8080"),
-		PollEnabled:        getOrDefault(get, "POLL_ENABLED", "true") == "true",
-		PollIntervalActive: parseDuration(get("POLL_INTERVAL_ACTIVE"), 30*time.Second),
-		PollIntervalIdle:   parseDuration(get("POLL_INTERVAL_IDLE"), 5*time.Minute),
 		ExternalURL:        get("EXTERNAL_URL"),
 	}
 
@@ -73,17 +66,6 @@ func getOrDefault(get func(string) string, key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func parseDuration(v string, fallback time.Duration) time.Duration {
-	if v == "" {
-		return fallback
-	}
-	d, err := time.ParseDuration(v)
-	if err != nil {
-		return fallback
-	}
-	return d
 }
 
 func expandHome(path string) string {

@@ -179,7 +179,6 @@ Replace `<your-machine>.ts.net` with your Tailscale Funnel URL.
 Notes:
 - Webhooks are client-side AJAX requests from whichever Marvin client is active
 - The server must be reachable via HTTPS (HTTP webhooks may silently fail)
-- Webhooks have no retry mechanism; the Go server's polling acts as fallback
 - Marvin may fire duplicate webhooks ~9 seconds apart; the server deduplicates these
 
 ## Step 9: Code Signing (Fastlane Match)
@@ -289,16 +288,3 @@ bundle exec fastlane build
 ### Mac Studio goes to sleep
 - System Settings > Energy > Prevent automatic sleeping when display is off
 
-### Rate limit exceeded
-- Check server logs for quota warnings
-- Increase `POLL_INTERVAL_IDLE` to reduce call volume
-
-## Marvin API Rate Limits
-
-| Limit | Value |
-|---|---|
-| Burst queries | 1 every 3 seconds |
-| Daily queries | 1,440/day |
-| Item creation | 1/second |
-
-The server's quota counter tracks polling calls against the daily limit.

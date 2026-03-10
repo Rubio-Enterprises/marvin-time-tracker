@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestLoadConfigDefaults(t *testing.T) {
@@ -25,12 +24,6 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.StateFilePath != "./state.json" {
 		t.Errorf("expected default StateFilePath ./state.json, got %s", cfg.StateFilePath)
 	}
-	if cfg.PollIntervalActive != 30*time.Second {
-		t.Errorf("expected default PollIntervalActive 30s, got %v", cfg.PollIntervalActive)
-	}
-	if cfg.PollIntervalIdle != 5*time.Minute {
-		t.Errorf("expected default PollIntervalIdle 5m, got %v", cfg.PollIntervalIdle)
-	}
 	if cfg.APNsBundleID != "com.strubio.MarvinTimeTracker" {
 		t.Errorf("expected default APNsBundleID, got %s", cfg.APNsBundleID)
 	}
@@ -49,7 +42,6 @@ func TestLoadConfigCustomValues(t *testing.T) {
 	t.Setenv("MARVIN_API_TOKEN", "tok")
 	t.Setenv("MARVIN_FULL_ACCESS_TOKEN", "full-tok")
 	t.Setenv("LISTEN_ADDR", ":9090")
-	t.Setenv("POLL_INTERVAL_ACTIVE", "10s")
 	t.Setenv("STATE_FILE_PATH", "/tmp/state.json")
 
 	cfg, err := LoadConfig("")
@@ -59,9 +51,6 @@ func TestLoadConfigCustomValues(t *testing.T) {
 
 	if cfg.ListenAddr != ":9090" {
 		t.Errorf("expected :9090, got %s", cfg.ListenAddr)
-	}
-	if cfg.PollIntervalActive != 10*time.Second {
-		t.Errorf("expected 10s, got %v", cfg.PollIntervalActive)
 	}
 	if cfg.StateFilePath != "/tmp/state.json" {
 		t.Errorf("expected /tmp/state.json, got %s", cfg.StateFilePath)
@@ -75,7 +64,6 @@ func TestLoadConfigFromFile(t *testing.T) {
 MARVIN_API_TOKEN = file-token
 MARVIN_FULL_ACCESS_TOKEN = file-full-token
 LISTEN_ADDR = :3000
-POLL_INTERVAL_ACTIVE = 15s
 `
 	if err := os.WriteFile(cfgFile, []byte(content), 0600); err != nil {
 		t.Fatal(err)
@@ -91,9 +79,6 @@ POLL_INTERVAL_ACTIVE = 15s
 	}
 	if cfg.ListenAddr != ":3000" {
 		t.Errorf("expected :3000, got %s", cfg.ListenAddr)
-	}
-	if cfg.PollIntervalActive != 15*time.Second {
-		t.Errorf("expected 15s, got %v", cfg.PollIntervalActive)
 	}
 	// Defaults still apply for unset values
 	if cfg.StateFilePath != "./state.json" {

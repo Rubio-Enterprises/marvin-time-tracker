@@ -12,10 +12,7 @@ Marvin Client (web/desktop/mobile)
     | webhook (startTracking / stopTracking)
     v
 Go Relay Server ──> APNs ──> iPhone Live Activity
-    |                              + Apple Watch Smart Stack
-    | adaptive polling fallback
-    v
-Marvin API (GET /api/trackedItem)
+                                   + Apple Watch Smart Stack
 ```
 
 ## Components
