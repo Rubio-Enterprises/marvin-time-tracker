@@ -24,6 +24,8 @@ LISTEN_ADDR = :8080
 # PRIVATE_LISTEN_ADDR = :8081
 # Dev: ./state.json | Homebrew: /opt/homebrew/var/marvin-relay/state.json
 STATE_FILE_PATH = ./state.json
+# Dev: ./history.json | Homebrew: /opt/homebrew/var/marvin-relay/history.json
+# HISTORY_FILE_PATH = ./history.json
 
 # API key for iOS app authentication (Bearer token)
 # Generate with: openssl rand -hex 32

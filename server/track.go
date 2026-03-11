@@ -80,7 +80,7 @@ func (th *TrackHandler) HandleStart(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("track/start: failed to consume tokens: %v", err)
 	}
-	notifyTrackingStarted(r.Context(), tokens, th.notifier, th.broker, req.Title, startedAt, DefaultSilentPushGracePeriod, func() string {
+	notifyTrackingStarted(r.Context(), tokens, th.notifier, th.broker, req.TaskID, req.Title, startedAt, DefaultSilentPushGracePeriod, func() string {
 		s := th.store.Get()
 		if !s.IsTracking() {
 			return "stopped"
@@ -149,7 +149,7 @@ func (th *TrackHandler) HandleStop(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("track/stop: stopped %s", taskID)
 
-	notifyTrackingStopped(th.notifier, th.broker, updateToken, prev.DeviceToken, taskID)
+	notifyTrackingStopped(th.notifier, th.broker, updateToken, prev.DeviceToken, taskID, state.TaskTitle, state.StartedAt)
 
 	if th.history != nil && state.StartedAt > 0 {
 		th.history.Add(SessionRecord{

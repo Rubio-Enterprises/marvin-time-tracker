@@ -74,6 +74,7 @@ final class TrackingViewModel {
                 }
             } else {
                 trackingState = .idle
+                await endAllLiveActivities()
             }
         } catch {
             errorMessage = "Failed to refresh status"
@@ -114,12 +115,27 @@ final class TrackingViewModel {
         do {
             try await client.stopTracking(taskId: trackingState.taskId)
             trackingState = .idle
+            await endAllLiveActivities()
         } catch {
             errorMessage = "Failed to stop tracking"
         }
     }
 
     // MARK: - Live Activity
+
+    private func endAllLiveActivities() async {
+        let finalState = TimeTrackerAttributes.ContentState(
+            taskTitle: "",
+            startedAt: .now,
+            isTracking: false
+        )
+        for activity in Activity<TimeTrackerAttributes>.activities {
+            await activity.end(
+                .init(state: finalState, staleDate: nil),
+                dismissalPolicy: .immediate
+            )
+        }
+    }
 
     private func startLiveActivity(taskTitle: String, startedAt: Date) async {
         let attributes = TimeTrackerAttributes()

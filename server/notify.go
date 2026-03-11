@@ -21,9 +21,11 @@ type NotifyTokens struct {
 // If no Live Activity token exists, a delayed alert fallback fires after gracePeriod.
 // The tokenChecker is called after the grace period to check if the silent push
 // succeeded (i.e., the app registered an UpdateToken).
-func notifyTrackingStarted(ctx context.Context, tokens NotifyTokens, notifier Notifier, broker BrokerPublisher, taskTitle string, startedAtMs int64, gracePeriod time.Duration, tokenChecker func() string) {
+func notifyTrackingStarted(ctx context.Context, tokens NotifyTokens, notifier Notifier, broker BrokerPublisher, taskID string, taskTitle string, startedAtMs int64, gracePeriod time.Duration, tokenChecker func() string) {
 	if broker != nil {
 		broker.BroadcastJSON("tracking_started", map[string]interface{}{
+			"tracking":  true,
+			"taskId":    taskID,
 			"taskTitle": taskTitle,
 			"startedAt": startedAtMs,
 		})
@@ -89,10 +91,13 @@ func notifyTrackingStarted(ctx context.Context, tokens NotifyTokens, notifier No
 // notifyTrackingStopped sends push notifications for a tracking stop event.
 // It ends the Live Activity if an update token is provided,
 // AND sends a silent push to sync the app UI state.
-func notifyTrackingStopped(notifier Notifier, broker BrokerPublisher, updateToken string, deviceToken string, stoppedTaskID string) {
+func notifyTrackingStopped(notifier Notifier, broker BrokerPublisher, updateToken string, deviceToken string, stoppedTaskID string, taskTitle string, startedAtMs int64) {
 	if broker != nil {
 		broker.BroadcastJSON("tracking_stopped", map[string]interface{}{
-			"taskId": stoppedTaskID,
+			"tracking":  false,
+			"taskId":    stoppedTaskID,
+			"taskTitle": taskTitle,
+			"startedAt": startedAtMs,
 		})
 	}
 

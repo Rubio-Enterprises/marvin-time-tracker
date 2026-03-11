@@ -21,7 +21,7 @@
 
   const Config = {
     async getRelayUrl() {
-      return (await GM_getValue('relayUrl', 'http://localhost:8080')).replace(/\/+$/, '');
+      return (await GM_getValue('relayUrl', 'http://localhost:8081')).replace(/\/+$/, '');
     },
     async setRelayUrl(url) {
       await GM_setValue('relayUrl', url.replace(/\/+$/, ''));
@@ -791,7 +791,7 @@
           </div>
           <div class="settings hidden">
             <label>Relay Server URL</label>
-            <input type="text" class="relay-url" placeholder="http://localhost:8080">
+            <input type="text" class="relay-url" placeholder="http://localhost:8081">
             <div class="url-error">Invalid URL format</div>
             <label>API Key</label>
             <input type="text" class="api-key" placeholder="Bearer token for server auth">

@@ -65,7 +65,7 @@ func (rh *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			tokens := NotifyTokens{
 				DeviceToken: payload.DeviceToken,
 			}
-			notifyTrackingStarted(r.Context(), tokens, rh.notifier, rh.broker, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod, func() string {
+			notifyTrackingStarted(r.Context(), tokens, rh.notifier, rh.broker, state.TrackingTaskID, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod, func() string {
 				s := rh.store.Get()
 				if !s.IsTracking() {
 					return "stopped"

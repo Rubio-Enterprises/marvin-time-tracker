@@ -96,7 +96,7 @@ func (rn *Renewal) check() {
 	if err != nil {
 		log.Printf("renewal: failed to consume tokens: %v", err)
 	}
-	notifyTrackingStarted(rn.ctx, tokens, rn.notifier, rn.broker, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod, func() string {
+	notifyTrackingStarted(rn.ctx, tokens, rn.notifier, rn.broker, state.TrackingTaskID, state.TaskTitle, state.StartedAt, DefaultSilentPushGracePeriod, func() string {
 		s := rn.store.Get()
 		if !s.IsTracking() {
 			return "stopped"

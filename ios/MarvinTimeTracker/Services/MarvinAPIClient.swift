@@ -87,4 +87,5 @@ struct ServerStatus: Codable {
     let startedAt: Int64?
     let hasPushToStartToken: Bool
     let hasUpdateToken: Bool
+    let hasDeviceToken: Bool
 }

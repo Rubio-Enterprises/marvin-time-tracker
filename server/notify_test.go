@@ -14,7 +14,7 @@ func TestNotifyUsesUpdateToken(t *testing.T) {
 	}
 
 	n := &mockNotifier{}
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "Task", 1000, 10*time.Millisecond, func() string { return "" })
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "Task", 1000, 10*time.Millisecond, func() string { return "" })
 
 	if n.updateCalls != 1 {
 		t.Errorf("expected 1 update call, got %d", n.updateCalls)
@@ -39,7 +39,7 @@ func TestNotifyUsesPushToStartToken(t *testing.T) {
 	}
 
 	n := &mockNotifier{}
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "Task", 1000, 10*time.Millisecond, func() string { return "" })
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "Task", 1000, 10*time.Millisecond, func() string { return "" })
 
 	if n.startCalls != 1 {
 		t.Errorf("expected 1 start call, got %d", n.startCalls)
@@ -58,7 +58,7 @@ func TestNotifySilentPushThenAlert(t *testing.T) {
 	}
 
 	n := &mockNotifier{}
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "My Task", 1000, 10*time.Millisecond, func() string { return "" })
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "My Task", 1000, 10*time.Millisecond, func() string { return "" })
 
 	if n.silentPushCalls != 1 {
 		t.Errorf("expected 1 silent push call, got %d", n.silentPushCalls)
@@ -84,7 +84,7 @@ func TestNotifySilentPushSucceeds(t *testing.T) {
 	}
 
 	n := &mockNotifier{}
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "Task", 1000, 50*time.Millisecond, func() string {
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "Task", 1000, 50*time.Millisecond, func() string {
 		return "new-update-token"
 	})
 
@@ -108,7 +108,7 @@ func TestNotifyTrackingStopsDuringGrace(t *testing.T) {
 
 	// Return "stopped" to simulate tracking having stopped
 	n := &mockNotifier{}
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "Task", 1000, 50*time.Millisecond, func() string { return "stopped" })
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "Task", 1000, 50*time.Millisecond, func() string { return "stopped" })
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -122,7 +122,7 @@ func TestNotifyNoTokens(t *testing.T) {
 	n := &mockNotifier{}
 
 	// Should not panic
-	notifyTrackingStarted(context.Background(), tokens, n, nil, "Task", 1000, 10*time.Millisecond, nil)
+	notifyTrackingStarted(context.Background(), tokens, n, nil, "task-1", "Task", 1000, 10*time.Millisecond, nil)
 
 	if n.updateCalls != 0 || n.startCalls != 0 || n.silentPushCalls != 0 || n.alertPushCalls != 0 {
 		t.Error("expected no calls with no tokens")
@@ -135,7 +135,7 @@ func TestNotifyNilNotifier(t *testing.T) {
 	}
 
 	// Should not panic
-	notifyTrackingStarted(context.Background(), tokens, nil, nil, "Task", 1000, 10*time.Millisecond, nil)
+	notifyTrackingStarted(context.Background(), tokens, nil, nil, "task-1", "Task", 1000, 10*time.Millisecond, nil)
 }
 
 func TestNotifyContextCancellation(t *testing.T) {
@@ -145,7 +145,7 @@ func TestNotifyContextCancellation(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	n := &mockNotifier{}
-	notifyTrackingStarted(ctx, tokens, n, nil, "Task", 1000, 1*time.Second, func() string { return "" })
+	notifyTrackingStarted(ctx, tokens, n, nil, "task-1", "Task", 1000, 1*time.Second, func() string { return "" })
 
 	// Cancel before grace period
 	cancel()
@@ -158,7 +158,7 @@ func TestNotifyContextCancellation(t *testing.T) {
 
 func TestNotifyTrackingStopped(t *testing.T) {
 	n := &mockNotifier{}
-	notifyTrackingStopped(n, nil, "update-token", "device-token", "")
+	notifyTrackingStopped(n, nil, "update-token", "device-token", "", "", 0)
 
 	if n.endCalls != 1 {
 		t.Errorf("expected 1 end call, got %d", n.endCalls)
@@ -170,7 +170,7 @@ func TestNotifyTrackingStopped(t *testing.T) {
 
 func TestNotifyTrackingStoppedNoUpdateToken(t *testing.T) {
 	n := &mockNotifier{}
-	notifyTrackingStopped(n, nil, "", "device-token", "")
+	notifyTrackingStopped(n, nil, "", "device-token", "", "", 0)
 
 	if n.endCalls != 0 {
 		t.Errorf("expected 0 end calls, got %d", n.endCalls)
@@ -182,5 +182,5 @@ func TestNotifyTrackingStoppedNoUpdateToken(t *testing.T) {
 
 func TestNotifyTrackingStoppedNilNotifier(t *testing.T) {
 	// Should not panic
-	notifyTrackingStopped(nil, nil, "update-token", "device-token", "")
+	notifyTrackingStopped(nil, nil, "update-token", "device-token", "", "", 0)
 }
