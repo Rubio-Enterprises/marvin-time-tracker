@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v2.3.0](https://github.com/strubio-ray/marvin-time-tracker/compare/c3bace55f96a2753b13149d9d1e29efc27978364..v2.3.0) - 2026-03-11
+#### Features
+- (**server**) split into public and private HTTP listeners - ([c3bace5](https://github.com/strubio-ray/marvin-time-tracker/commit/c3bace55f96a2753b13149d9d1e29efc27978364)) - Steven
+
+- - -
+
 ## [v2.2.0](https://github.com/strubio-ray/marvin-time-tracker/compare/bcab769ef27f8660311f35596e0585289e9c3d0f..v2.2.0) - 2026-03-10
 #### Features
 - (**sse**) add ResponseController with rolling write deadlines - ([bcab769](https://github.com/strubio-ray/marvin-time-tracker/commit/bcab769ef27f8660311f35596e0585289e9c3d0f)) - Steven
