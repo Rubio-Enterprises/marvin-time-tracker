@@ -21,6 +21,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.ListenAddr != ":8080" {
 		t.Errorf("expected default ListenAddr :8080, got %s", cfg.ListenAddr)
 	}
+	if cfg.PrivateListenAddr != ":8081" {
+		t.Errorf("expected default PrivateListenAddr :8081, got %s", cfg.PrivateListenAddr)
+	}
 	if cfg.StateFilePath != "./state.json" {
 		t.Errorf("expected default StateFilePath ./state.json, got %s", cfg.StateFilePath)
 	}

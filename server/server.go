@@ -9,8 +9,9 @@ import (
 )
 
 type Server struct {
-	handler http.Handler
-	store   *StateStore
+	publicHandler  http.Handler
+	privateHandler http.Handler
+	store          *StateStore
 }
 
 func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...ServerOption) *Server {
@@ -37,38 +38,43 @@ func NewServer(store *StateStore, dedup *DedupCache, notifier Notifier, opts ...
 		return requireAPIKey(so.apiKey, h)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", auth(statusHandler(store)))
-	mux.HandleFunc("POST /webhook/start", rateLimitMiddleware(wh.HandleStart))
-	mux.HandleFunc("POST /webhook/stop", rateLimitMiddleware(wh.HandleStop))
-	mux.HandleFunc("POST /register", auth(rh.Handle))
-	mux.HandleFunc("GET /userscript/marvin-relay-tracker.user.js", userscriptHandler(so.externalURL))
+	// Public mux: webhooks and userscript (exposed via Tailscale Funnel)
+	publicMux := http.NewServeMux()
+	publicMux.HandleFunc("POST /webhook/start", rateLimitMiddleware(wh.HandleStart))
+	publicMux.HandleFunc("POST /webhook/stop", rateLimitMiddleware(wh.HandleStop))
+	publicMux.HandleFunc("GET /userscript/marvin-relay-tracker.user.js", userscriptHandler(so.externalURL))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:       []string{"*"},
+		AllowedMethods:       []string{"GET", "POST", "PUT", "OPTIONS"},
+		AllowedHeaders:       []string{"Content-Type", "Authorization"},
+		OptionsSuccessStatus: 200,
+	})
+
+	// Private mux: app-facing endpoints (Tailscale network only)
+	privateMux := http.NewServeMux()
+	privateMux.HandleFunc("GET /status", auth(statusHandler(store)))
+	privateMux.HandleFunc("POST /register", auth(rh.Handle))
 
 	if so.history != nil {
-		mux.HandleFunc("GET /history", auth(historyHandler(so.history)))
+		privateMux.HandleFunc("GET /history", auth(historyHandler(so.history)))
 	}
 
 	if so.broker != nil {
-		mux.HandleFunc("GET /events", auth(sseHandler(store, so.broker)))
+		privateMux.HandleFunc("GET /events", auth(sseHandler(store, so.broker)))
 	}
 
 	if so.marvin != nil {
 		th := NewTrackHandler(store, so.marvin, notifier, broker, history)
-		mux.HandleFunc("POST /start", auth(th.HandleStart))
-		mux.HandleFunc("POST /stop", auth(th.HandleStop))
-		mux.HandleFunc("GET /tasks", auth(tasksHandler(so.marvin)))
+		privateMux.HandleFunc("POST /start", auth(th.HandleStart))
+		privateMux.HandleFunc("POST /stop", auth(th.HandleStop))
+		privateMux.HandleFunc("GET /tasks", auth(tasksHandler(so.marvin)))
 	}
 
-	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"*"},
-		AllowedMethods:     []string{"GET", "POST", "PUT", "OPTIONS"},
-		AllowedHeaders:     []string{"Content-Type", "Authorization"},
-		OptionsSuccessStatus: 200,
-	})
-
 	return &Server{
-		handler: c.Handler(mux),
-		store:   store,
+		publicHandler:  c.Handler(publicMux),
+		privateHandler: privateMux,
+		store:          store,
 	}
 }
 
@@ -119,9 +125,8 @@ func WithDebug(debug bool) ServerOption {
 	}
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.handler.ServeHTTP(w, r)
-}
+func (s *Server) PublicHandler() http.Handler  { return s.publicHandler }
+func (s *Server) PrivateHandler() http.Handler { return s.privateHandler }
 
 func historyHandler(history *HistoryStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

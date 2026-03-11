@@ -48,8 +48,8 @@ Version is managed in `ios/version.xcconfig` (`MARKETING_VERSION` and `CURRENT_P
 Single-binary relay server using Go 1.22+ stdlib `net/http` routing. Two external deps: `sideshow/apns2` (APNs push) and `rs/cors`.
 
 Key files and their roles:
-- **`main.go`** — Wires config, state store, dedup, APNs client, renewal, and server
-- **`server.go`** — HTTP mux setup, CORS config, status endpoint. Uses functional options (`ServerOption`)
+- **`main.go`** — Wires config, state store, dedup, APNs client, renewal, and dual HTTP servers (public + private) via errgroup
+- **`server.go`** — Dual HTTP mux setup (public + private), CORS config, status endpoint. Uses functional options (`ServerOption`)
 - **`webhook.go`** — Handles `POST /webhook/start` and `/webhook/stop` from Marvin client-side AJAX
 - **`register.go`** — `POST /register` receives push tokens from the iOS app
 - **`track.go`** — `POST /start` and `/stop` for app-initiated tracking via Marvin API
@@ -81,10 +81,12 @@ Watch support is auto-mirrored Live Activities via `.supplementalActivityFamilie
 
 ### Data Flow
 
+The server runs two listeners: a **public** listener (`:8080`, exposed via Tailscale Funnel) for webhooks/userscript, and a **private** listener (`:8081`, tailnet-only) for app endpoints.
+
 ```
-Marvin Client → webhook → Go Server → APNs → iPhone Live Activity / Watch Smart Stack
-iOS App → POST /register → Go Server (stores push tokens)
-iOS App → POST /start|/stop → Marvin API (via Go server proxy)
+Marvin Client → webhook → Go Server :8080 (public) → APNs → iPhone Live Activity / Watch Smart Stack
+iOS App → POST /register → Go Server :8081 (private, stores push tokens)
+iOS App → POST /start|/stop → Go Server :8081 (private) → Marvin API
 ```
 
 ## Configuration
@@ -94,7 +96,7 @@ Server configured via config file and/or env vars (see `server/config.example`):
 - `MARVIN_FULL_ACCESS_TOKEN` (required)
 - `API_KEY` (optional, but strongly recommended — protects app-facing endpoints)
 - `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_P8_PATH`, `APNS_BUNDLE_ID`
-- `STATE_FILE_PATH`, `LISTEN_ADDR`
+- `STATE_FILE_PATH`, `LISTEN_ADDR`, `PRIVATE_LISTEN_ADDR`
 
 The iOS app authenticates with the server using `API_KEY` via `Authorization: Bearer` header. The Marvin API tokens never leave the server.
 
@@ -113,8 +115,9 @@ iOS signing requires:
 - Code signing uses Fastlane Match (manual style) — profiles are referenced by name in `project.yml`
 - Bundle ID: `com.strubio.MarvinTimeTracker`
 - iOS app uses `marvin-tracker://` URL scheme for deep links (e.g., Stop button in Live Activity)
-- App-facing endpoints (`/status`, `/register`, `/start`, `/stop`, `/tasks`) require `Authorization: Bearer <API_KEY>` when `API_KEY` is configured
-- Webhook and public endpoints (`/webhook/*`, `/events`, `/history`, `/userscript/*`) are unauthenticated
+- Server runs two listeners: public (`:8080`) for webhooks/userscript, private (`:8081`) for app endpoints
+- Public listener: `/webhook/*`, `/userscript/*` — unauthenticated, CORS-enabled, exposed via Tailscale Funnel
+- Private listener: `/status`, `/register`, `/start`, `/stop`, `/tasks`, `/events`, `/history` — require `Authorization: Bearer <API_KEY>` when configured, tailnet-only
 
 ## Release Pipeline
 

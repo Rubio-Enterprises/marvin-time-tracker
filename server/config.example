@@ -18,7 +18,10 @@ APNS_KEY_P8_PATH = ~/.private_keys/AuthKey.p8
 APNS_BUNDLE_ID = com.strubio.MarvinTimeTracker
 
 # Server
+# Public listener (webhooks + userscript — exposed via Tailscale Funnel)
 LISTEN_ADDR = :8080
+# Private listener (app endpoints — Tailscale network only)
+# PRIVATE_LISTEN_ADDR = :8081
 # Dev: ./state.json | Homebrew: /opt/homebrew/var/marvin-relay/state.json
 STATE_FILE_PATH = ./state.json
 

@@ -21,7 +21,7 @@ func TestServerStatus(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/status", nil)
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PrivateHandler().ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
@@ -49,16 +49,16 @@ func TestServerWebhookLifecycle(t *testing.T) {
 	})
 	req := httptest.NewRequest(http.MethodPost, "/webhook/start", bytes.NewReader(body))
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PublicHandler().ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("start: expected 200, got %d", w.Code)
 	}
 
-	// Check status
+	// Check status (private handler)
 	req = httptest.NewRequest(http.MethodGet, "/status", nil)
 	w = httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PrivateHandler().ServeHTTP(w, req)
 
 	var resp map[string]interface{}
 	json.NewDecoder(w.Body).Decode(&resp)
@@ -76,12 +76,12 @@ func TestServerWebhookLifecycle(t *testing.T) {
 	})
 	req = httptest.NewRequest(http.MethodPost, "/webhook/stop", bytes.NewReader(stopBody))
 	w = httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PublicHandler().ServeHTTP(w, req)
 
-	// Check status again
+	// Check status again (private handler)
 	req = httptest.NewRequest(http.MethodGet, "/status", nil)
 	w = httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PrivateHandler().ServeHTTP(w, req)
 
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp["tracking"] != false {
@@ -96,7 +96,7 @@ func TestServerCORSHeaders(t *testing.T) {
 	req.Header.Set("Origin", "https://app.amazingmarvin.com")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PublicHandler().ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("CORS preflight: expected 200, got %d", w.Code)
@@ -124,7 +124,7 @@ func TestServerAuthProtectsEndpoints(t *testing.T) {
 	for _, ep := range endpoints {
 		req := httptest.NewRequest(ep.method, ep.path, nil)
 		w := httptest.NewRecorder()
-		srv.ServeHTTP(w, req)
+		srv.PrivateHandler().ServeHTTP(w, req)
 
 		if w.Code != http.StatusUnauthorized {
 			t.Errorf("%s %s: expected 401, got %d", ep.method, ep.path, w.Code)
@@ -138,7 +138,7 @@ func TestServerAuthAllowsValidToken(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/status", nil)
 	req.Header.Set("Authorization", "Bearer test-secret")
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PrivateHandler().ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
@@ -156,7 +156,7 @@ func TestServerWebhooksNoAuthRequired(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/webhook/start", bytes.NewReader(body))
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PublicHandler().ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("webhook should not require auth, got %d", w.Code)
@@ -166,12 +166,12 @@ func TestServerWebhooksNoAuthRequired(t *testing.T) {
 func TestServerCORSPreflightWithAuthorizationHeader(t *testing.T) {
 	srv := newTestServer(t, WithAPIKey("test-secret"))
 
-	req := httptest.NewRequest(http.MethodOptions, "/status", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/webhook/start", nil)
 	req.Header.Set("Origin", "https://example.com")
-	req.Header.Set("Access-Control-Request-Method", "GET")
+	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "Authorization")
 	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
+	srv.PublicHandler().ServeHTTP(w, req)
 
 	// Preflight should succeed (200) even with Authorization in the request.
 	// This confirms CORS doesn't block the Authorization header.

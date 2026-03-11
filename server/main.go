@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 var version = "dev"
@@ -68,9 +70,17 @@ func main() {
 
 	srv := NewServer(store, dedup, notifier, WithBroker(broker), WithMarvinClient(marvin), WithHistory(history), WithExternalURL(cfg.ExternalURL), WithAPIKey(cfg.APIKey), WithDebug(cfg.Debug))
 
-	httpServer := &http.Server{
+	publicServer := &http.Server{
 		Addr:              cfg.ListenAddr,
-		Handler:           srv,
+		Handler:           srv.PublicHandler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	privateServer := &http.Server{
+		Addr:              cfg.PrivateListenAddr,
+		Handler:           srv.PrivateHandler(),
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -80,24 +90,41 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	go func() {
-		log.Printf("listening on %s", cfg.ListenAddr)
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		log.Printf("public listener on %s (webhooks, userscript)", cfg.ListenAddr)
+		if err := publicServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return err
 		}
-	}()
+		return nil
+	})
 
-	<-ctx.Done()
-	stop() // Reset signal handling; second signal will force-quit.
-	log.Printf("shutting down...")
+	g.Go(func() error {
+		log.Printf("private listener on %s (app endpoints)", cfg.PrivateListenAddr)
+		if err := privateServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return err
+		}
+		return nil
+	})
 
-	renewal.Stop()
-	webhookLimiter.Stop()
+	g.Go(func() error {
+		<-gCtx.Done()
+		stop()
+		log.Printf("shutting down...")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("shutdown error: %v", err)
+		renewal.Stop()
+		webhookLimiter.Stop()
+
+		shutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		publicServer.Shutdown(shutCtx)
+		privateServer.Shutdown(shutCtx)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Fatalf("server error: %v", err)
 	}
 
 	log.Printf("shutdown complete")
