@@ -114,7 +114,7 @@ Notes:
 ### Option A: Homebrew (recommended)
 
 ```bash
-brew tap strubio-ray/tap
+brew tap rubio-enterprises/tap
 brew install marvin-relay
 ```
 
@@ -123,7 +123,7 @@ A default config file is installed to `/opt/homebrew/etc/marvin-relay/config`.
 ### Option B: Build from source
 
 ```bash
-git clone https://github.com/strubio-ray/marvin-time-tracker.git
+git clone https://github.com/Rubio-Enterprises/marvin-time-tracker.git
 cd marvin-time-tracker
 just build
 cp server/config.example server/config
@@ -189,7 +189,7 @@ Certificates and provisioning profiles are managed by [Fastlane Match](https://d
 
 ### Prerequisites
 
-- Access to the certificates repo: `https://github.com/strubio-ray/fastlane-certificates`
+- Access to the certificates repo: `https://github.com/Rubio-Enterprises/fastlane-certificates`
   - Push access (SSH key or personal access token) for certificate creation
   - Read access is sufficient for `readonly` fetches
 - Match manages profiles for both bundle IDs:

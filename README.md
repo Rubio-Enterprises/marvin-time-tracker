@@ -51,7 +51,7 @@ just release --dry-run   # Preview next version
 just release             # Bump, changelog, tag, and push
 ```
 
-Cocogitto determines the version from conventional commits (`feat:` → minor, `fix:` → patch, `feat!:` → major). The `bump-homebrew.yml` workflow runs automatically on tag push, updating the formula in the [Homebrew tap](https://github.com/strubio-ray/homebrew-tap).
+Cocogitto determines the version from conventional commits (`feat:` → minor, `fix:` → patch, `feat!:` → major). The `bump-homebrew.yml` workflow runs automatically on tag push, updating the formula in the [Homebrew tap](https://github.com/Rubio-Enterprises/homebrew-tap).
 
 ### 2. Update the server
 

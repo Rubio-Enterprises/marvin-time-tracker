@@ -1,9 +1,9 @@
-# Canonical copy lives in the homebrew-tap repo: strubio-ray/homebrew-tap
+# Canonical copy lives in the homebrew-tap repo: Rubio-Enterprises/homebrew-tap
 # This file is kept as a development reference.
 class MarvinRelay < Formula
   desc "Go relay server bridging Amazing Marvin webhooks to Apple Live Activities"
-  homepage "https://github.com/strubio-ray/marvin-time-tracker"
-  url "https://github.com/strubio-ray/marvin-time-tracker/archive/refs/tags/v0.1.0.tar.gz"
+  homepage "https://github.com/Rubio-Enterprises/marvin-time-tracker"
+  url "https://github.com/Rubio-Enterprises/marvin-time-tracker/archive/refs/tags/v0.1.0.tar.gz"
   sha256 "dbd6820cbb8673b4022c337100b03a4c1a4947d08b905de49a4211becf316ede"
   license "MIT"
 
