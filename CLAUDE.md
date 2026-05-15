@@ -11,6 +11,7 @@ Marvin Time Tracker: a minimal iOS app + Go relay server that surfaces a live ti
 All commands use the Justfile (`just --list` to see all recipes).
 
 ### Go Server
+
 ```bash
 just build          # Build server binary to server/marvin-relay
 just test           # Run all server tests
@@ -24,12 +25,14 @@ go test ./server/... -run TestFunctionName
 ```
 
 ### iOS App
+
 ```bash
 just ios-deploy      # Build, install, launch on device via Fastlane
 just ios-testflight  # Build and upload to TestFlight
 ```
 
 For Fastlane-only operations that don't have Justfile recipes:
+
 ```bash
 cd ios
 bundle exec fastlane setup           # Generate project + sync dev signing
@@ -48,6 +51,7 @@ Version is managed in `ios/version.xcconfig` (`MARKETING_VERSION` and `CURRENT_P
 Single-binary relay server using Go 1.22+ stdlib `net/http` routing. External deps: `golang-jwt/jwt` (APNs JWT auth), `rs/cors`, `golang.org/x/net` (HTTP/2 for APNs), `golang.org/x/time` (rate limiting).
 
 Key files and their roles:
+
 - **`main.go`** — Wires config, state store, dedup, APNs client, renewal, and dual HTTP servers (public + private) via errgroup
 - **`server.go`** — Dual HTTP mux setup (public + private), CORS config, status endpoint. Uses functional options (`ServerOption`)
 - **`webhook.go`** — Handles `POST /webhook/start` and `/webhook/stop` from Marvin client-side AJAX
@@ -103,6 +107,7 @@ iOS App → POST /start|/stop → Go Server :8081 (private) → Marvin API
 ## Testing Patterns
 
 Server tests use `httptest.NewServer` with the full `Server` type. Mock implementations:
+
 - `mockNotifier` (`helpers_test.go`) — thread-safe mock implementing `Notifier` interface, tracks call counts and arguments
 - `mockMarvinClient` — implements `MarvinAPIClient` for testing `/start`, `/stop`, `/tasks` without real API calls
 - Tests create a `StateStore` with `os.CreateTemp` for isolated state files
@@ -112,6 +117,7 @@ Key interfaces for testing: `Notifier`, `MarvinAPIClient`, `BrokerPublisher`, `S
 ## Configuration
 
 Server configured via config file and/or env vars (see `server/config.example`):
+
 - `MARVIN_API_TOKEN` (required)
 - `MARVIN_FULL_ACCESS_TOKEN` (required)
 - `API_KEY` (optional, but strongly recommended — protects app-facing endpoints)
@@ -121,6 +127,7 @@ Server configured via config file and/or env vars (see `server/config.example`):
 The iOS app authenticates with the server using `API_KEY` via `Authorization: Bearer` header. The Marvin API tokens never leave the server.
 
 iOS signing requires:
+
 - `DEVELOPMENT_TEAM` — Apple Developer Team ID (used in `project.yml`)
 - `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_PATH` — App Store Connect API key (for Fastlane match and TestFlight)
 
@@ -131,7 +138,7 @@ iOS signing requires:
 - Live Activities have an 8-hour system cap; server auto-renews at 7h45m
 - APNs `liveactivity` push type requires p8 key (not p12)
 - `Notifier` interface in `notifier.go` enables testing without real APNs
-- Fastlane sets `SKIP_COG=1` to bypass cocogitto commit hooks for its auto-generated commits
+- Fastlane sets `LEFTHOOK=0` to bypass lefthook commit hooks for its auto-generated commits
 - Code signing uses Fastlane Match (manual style) — profiles are referenced by name in `project.yml`
 - Bundle ID: `com.strubio.MarvinTimeTracker`
 - iOS app uses `marvin-tracker://` URL scheme for deep links (e.g., Stop button in Live Activity)
@@ -143,12 +150,13 @@ iOS signing requires:
 
 **Every server or iOS change requires a release to reach Homebrew installations.**
 
-```bash
-just release --dry-run   # Preview next version
-just release             # Bump, changelog, tag, push (triggers Homebrew auto-update)
-```
+Releases are CI-driven via [release-please](https://github.com/googleapis/release-please) (see
+`.github/workflows/release-please.yml` and `release-please-config.json`). Pushing
+conventional commits to `main` opens / updates a release PR. Merging that PR tags the
+new version and creates the GitHub release, which triggers `.github/workflows/bump-homebrew.yml`.
 
-Cocogitto (`cog.toml`) determines the version automatically from conventional commits:
+Version bump rules (from conventional commits):
+
 - `feat:` → minor bump, `fix:` → patch bump, `feat!:`/`BREAKING CHANGE` → major bump
 
 Then on the deployment machine: `brew update && brew upgrade marvin-relay && brew services restart marvin-relay`

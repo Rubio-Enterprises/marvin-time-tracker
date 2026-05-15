@@ -1,0 +1,46 @@
+# yamllint config — relax the defaults for the standards template family.
+# Reasoning: the template ships heavily-commented YAML (lefthook.yml, .github/workflows/standards.yml)
+# whose comments cross 80 chars to remain readable. document-start (---) is not part of the
+# org YAML style. Comments min-spaces relaxed so trailing comments like `run: cmd # note` pass.
+#
+# CONSUMER EXTENSIONS: create a `.yamllint.local` file in the repo root with
+# your additional rules / ignores. Copier's `_tasks` hook (merge-yamllint.sh)
+# deep-merges it into this file at every render via `yq *+`. Example:
+#
+#   # .yamllint.local
+#   ignore:
+#     - src/data/**          # content YAML, not infra
+#     - vendor/**
+#   rules:
+#     line-length:
+#       max: 200             # override template's 120
+#
+# After `copier copy/update`, the merged `.yamllint` has both template's
+# universal rules and your additions. The merge is idempotent and arrays
+# concat with dedup, so re-running is safe.
+extends: default
+# Repo-local yamllint overrides. Merged into `.yamllint` by the standards
+# template's `merge-yamllint.sh` Copier task on each render. See `.yamllint`
+# header for merge semantics.
+ignore:
+  - .copier-answers.yml
+  - ios/project.yml # XcodeGen project spec; long lines + truthy yes/no by design
+  - .vm/ # agent-sandbox managed YAML; out of repo style scope
+  - .github/workflows/bump-homebrew.yml # legacy workflow with one long sha-aware line
+rules:
+  line-length:
+    max: 120
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+  # The template ships GitHub Actions `on:` keys (yamllint parses `on` as truthy
+  # under YAML 1.1) and `with: { mode: gitleaks }` flow-style braces in
+  # standards.yml. Jinja-padding blank lines appear between hook blocks in
+  # rendered lefthook.yml output. Relax these universally so the template's own
+  # YAML and every consumer's rendered output pass without per-repo tuning.
+  truthy:
+    check-keys: false
+  braces:
+    max-spaces-inside: 1
+  empty-lines:
+    max: 4

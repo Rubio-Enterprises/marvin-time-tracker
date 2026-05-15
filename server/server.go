@@ -152,7 +152,7 @@ func statusHandler(store *StateStore) http.HandlerFunc {
 
 		resp := map[string]interface{}{
 			"status":              "ok",
-			"tracking":           state.IsTracking(),
+			"tracking":            state.IsTracking(),
 			"hasPushToStartToken": state.PushToStartToken != "",
 			"hasUpdateToken":      state.UpdateToken != "",
 			"hasDeviceToken":      state.DeviceToken != "",

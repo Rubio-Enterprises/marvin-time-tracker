@@ -10,9 +10,15 @@ import (
 )
 
 type mockMarvinClient struct {
-	trackCalls       []struct{ TaskID, Action string }
-	retrackCalls     []struct{ TaskID string; Times []int64 }
-	updateDocCalls   []struct{ TaskID string; Setters []DocSetter }
+	trackCalls   []struct{ TaskID, Action string }
+	retrackCalls []struct {
+		TaskID string
+		Times  []int64
+	}
+	updateDocCalls []struct {
+		TaskID  string
+		Setters []DocSetter
+	}
 	allCalls         []string
 	todayItemsResult []byte
 	todayItemsErr    bool
@@ -26,13 +32,19 @@ func (m *mockMarvinClient) Track(taskID, action string) error {
 }
 
 func (m *mockMarvinClient) Retrack(taskID string, times []int64) error {
-	m.retrackCalls = append(m.retrackCalls, struct{ TaskID string; Times []int64 }{taskID, times})
+	m.retrackCalls = append(m.retrackCalls, struct {
+		TaskID string
+		Times  []int64
+	}{taskID, times})
 	m.allCalls = append(m.allCalls, "retrack")
 	return nil
 }
 
 func (m *mockMarvinClient) UpdateDoc(taskID string, setters []DocSetter) error {
-	m.updateDocCalls = append(m.updateDocCalls, struct{ TaskID string; Setters []DocSetter }{taskID, setters})
+	m.updateDocCalls = append(m.updateDocCalls, struct {
+		TaskID  string
+		Setters []DocSetter
+	}{taskID, setters})
 	m.allCalls = append(m.allCalls, "updateDoc")
 	return nil
 }

@@ -1,0 +1,18 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  enable:
+    - errcheck
+    # gosimple was folded into staticcheck in golangci-lint v2; listing it
+    # explicitly errors with "unknown linters: 'gosimple'". Keep only
+    # staticcheck — it now covers the SA* + S* (formerly gosimple) checks.
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+    - revive
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

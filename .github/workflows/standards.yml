@@ -1,0 +1,72 @@
+name: standards
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1" # weekly trufflehog
+permissions:
+  contents: read
+jobs:
+  audit:
+    # The `# v1` comment tells Renovate which floating tag to track: it bumps
+    # the SHA when .github@v1 advances. Without it, the SHA pin is opaque to
+    # Renovate and never gets updated.
+    uses: Rubio-Enterprises/.github/.github/workflows/audit.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1
+  commitlint-pr-title:
+    # PR-title conventional-commit check. Uses the canonical
+    # amannn/action-semantic-pull-request action: it bundles commitlint and
+    # config-conventional internally, so we sidestep the mise npm-backend
+    # extends-resolution issue (resolveExtends starts at CWD and can't see
+    # mise's per-package install dirs). Types list mirrors
+    # @commitlint/config-conventional so the local lefthook commit-msg hook
+    # (which uses mise's commitlint) stays in sync with this gate.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # Job-scoped: only this job needs to post a check/status on the PR.
+    # The reusable audit/e2e/secret-scan workflows declare their own
+    # permissions internally — giving pull-requests:write at workflow level
+    # would leak it to push and schedule runs that don't need it.
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: amannn/action-semantic-pull-request@e32d7e603df1aa1ba07e981f2a23455dee596825 # v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            chore
+            build
+            ci
+          requireScope: false
+  gitleaks:
+    if: github.event_name == 'pull_request'
+    uses: Rubio-Enterprises/.github/.github/workflows/secret-scan.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1
+    with: { mode: gitleaks }
+  trufflehog:
+    if: github.event_name == 'schedule'
+    uses: Rubio-Enterprises/.github/.github/workflows/secret-scan.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1
+    with: { mode: trufflehog }
+
+  # e2e: intentionally omitted. marvin-time-tracker is a Go relay server +
+  # SwiftUI iOS app; its end-to-end surface is the iOS Live Activity push flow
+  # which is exercised via Fastlane / TestFlight, not via Playwright. The
+  # reusable e2e.yml workflow assumes a `mise run e2e` task or
+  # `package.json scripts.e2e` — neither applies here. Server tests run via
+  # `mise run test` locally; once a Go-test reusable workflow lands in
+  # rubio-dotgithub we can wire it in (tracked in AGENTS.md §9.8).
+
+  lint-hooks:
+    # CI gate that runs lefthook commands across the full repo (not just staged
+    # diffs). Catches drift in hook-tool pins / PATH wiring that local commits
+    # would otherwise hit first. PR-only; push/schedule paths skip.
+    if: github.event_name == 'pull_request'
+    uses: Rubio-Enterprises/.github/.github/workflows/lint-hooks.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1

@@ -1,0 +1,7 @@
+# Repo-local yamllint overrides. Merged into `.yamllint` by the standards
+# template's `merge-yamllint.sh` Copier task on each render. See `.yamllint`
+# header for merge semantics.
+ignore:
+  - ios/project.yml             # XcodeGen project spec; long lines + truthy yes/no by design
+  - .vm/                        # agent-sandbox managed YAML; out of repo style scope
+  - .github/workflows/bump-homebrew.yml  # legacy workflow with one long sha-aware line

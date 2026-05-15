@@ -62,6 +62,8 @@ bump-userscript part='patch':
     sed -i'' -e "s/@version[[:space:]]*${old}/@version      ${new}/" "$file"
     echo "userscript: ${old} → ${new}"
 
-# Bump version, update changelog, tag, and push (use --dry-run to preview)
-release *ARGS='--auto':
-    cog bump {{ARGS}}
+# Release pipeline is now CI-driven via release-please (see .github/workflows/release-please.yml).
+# Conventional-commit pushes to `main` open / update a release PR; merging it tags and creates
+# the GitHub release, which kicks off the Homebrew auto-update job.
+release:
+    @echo "Releases are managed by release-please. Push conventional commits to main; merge the release PR it opens."
