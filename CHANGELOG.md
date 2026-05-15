@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [2.4.0](https://github.com/Rubio-Enterprises/marvin-time-tracker/compare/v2.3.0...v2.4.0) (2026-05-15)
+
+
+### Features
+
+* migrate cocogitto → commitlint + release-please (audit-driven) ([#2](https://github.com/Rubio-Enterprises/marvin-time-tracker/issues/2)) ([cfa49ad](https://github.com/Rubio-Enterprises/marvin-time-tracker/commit/cfa49ad42f03d7972875149f526aa28a9571f98a))
+
+
+### Bug Fixes
+
+* normalize cross-component data contracts ([b0682ae](https://github.com/Rubio-Enterprises/marvin-time-tracker/commit/b0682ae5fede0be48b25c92cf9ab2416dc96d98d))
+
 ## [v2.3.0](https://github.com/strubio-ray/marvin-time-tracker/compare/c3bace55f96a2753b13149d9d1e29efc27978364..v2.3.0) - 2026-03-11
 #### Features
 - (**server**) split into public and private HTTP listeners - ([c3bace5](https://github.com/strubio-ray/marvin-time-tracker/commit/c3bace55f96a2753b13149d9d1e29efc27978364)) - Steven
