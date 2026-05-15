@@ -54,6 +54,15 @@ Existing issues should be cleaned up incrementally; new code should run clean.
    invoked in the same file. Template's go-archetype block needs the same
    prefix.
 
+## e2e reusable workflow — opt-out
+
+`.github/workflows/standards.yml` omits the `e2e` job. The reusable
+`e2e.yml` assumes a `mise run e2e` task or `package.json scripts.e2e`
+entry point; marvin-time-tracker has neither — its end-to-end surface is
+the iOS Live Activity push flow, exercised via Fastlane / TestFlight.
+Server tests run via `mise run test` locally. Wire in a Go-test reusable
+workflow once one lands in `rubio-dotgithub`.
+
 ## Fastlane / lefthook interaction
 
 `ios/fastlane/Fastfile` sets `ENV["LEFTHOOK"] = "0"` so Fastlane's

@@ -56,8 +56,13 @@ jobs:
     uses: Rubio-Enterprises/.github/.github/workflows/secret-scan.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1
     with: { mode: trufflehog }
 
-  e2e:
-    uses: Rubio-Enterprises/.github/.github/workflows/e2e.yml@279530fb34b32376e2db6228bb6b7386378721f2 # v1
+  # e2e: intentionally omitted. marvin-time-tracker is a Go relay server +
+  # SwiftUI iOS app; its end-to-end surface is the iOS Live Activity push flow
+  # which is exercised via Fastlane / TestFlight, not via Playwright. The
+  # reusable e2e.yml workflow assumes a `mise run e2e` task or
+  # `package.json scripts.e2e` — neither applies here. Server tests run via
+  # `mise run test` locally; once a Go-test reusable workflow lands in
+  # rubio-dotgithub we can wire it in (tracked in AGENTS.md §9.8).
 
   lint-hooks:
     # CI gate that runs lefthook commands across the full repo (not just staged
