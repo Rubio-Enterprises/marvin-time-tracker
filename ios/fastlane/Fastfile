@@ -1,5 +1,6 @@
-# Skip cocogitto commit-msg hook — Fastlane's commit messages don't follow Conventional Commits
-ENV["SKIP_COG"] = "1"
+# Skip lefthook hooks — Fastlane's commit messages don't follow Conventional Commits.
+# Lefthook honors `LEFTHOOK=0` to disable all hooks for the wrapped invocation.
+ENV["LEFTHOOK"] = "0"
 
 # Helper to get App Store Connect API key
 # Uses key_filepath for local builds, key_content for CI

@@ -8,20 +8,20 @@ import (
 )
 
 type Config struct {
-	APNsKeyID          string
-	APNsTeamID         string
-	APNsPrivateKeyPath string
-	APNsBundleID       string
-	MarvinAPIToken          string
-	MarvinFullAccessToken   string
-	StateFilePath      string
-	HistoryFilePath    string
-	ListenAddr         string
-	PrivateListenAddr  string
-	ExternalURL        string
-	APIKey             string
-	APNsEnv            string
-	Debug              bool
+	APNsKeyID             string
+	APNsTeamID            string
+	APNsPrivateKeyPath    string
+	APNsBundleID          string
+	MarvinAPIToken        string
+	MarvinFullAccessToken string
+	StateFilePath         string
+	HistoryFilePath       string
+	ListenAddr            string
+	PrivateListenAddr     string
+	ExternalURL           string
+	APIKey                string
+	APNsEnv               string
+	Debug                 bool
 }
 
 // LoadConfig builds a Config by layering (lowest to highest priority):
@@ -50,20 +50,20 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	cfg := &Config{
-		APNsKeyID:          get("APNS_KEY_ID"),
-		APNsTeamID:         get("APNS_TEAM_ID"),
-		APNsPrivateKeyPath: expandHome(get("APNS_KEY_P8_PATH")),
-		APNsBundleID:       getOrDefault(get, "APNS_BUNDLE_ID", "com.strubio.MarvinTimeTracker"),
-		MarvinAPIToken:          token,
-		MarvinFullAccessToken:   fullAccessToken,
-		StateFilePath:      getOrDefault(get, "STATE_FILE_PATH", "./state.json"),
-		HistoryFilePath:    getOrDefault(get, "HISTORY_FILE_PATH", "./history.json"),
-		ListenAddr:         getOrDefault(get, "LISTEN_ADDR", ":8080"),
-		PrivateListenAddr:  getOrDefault(get, "PRIVATE_LISTEN_ADDR", ":8081"),
-		ExternalURL:        get("EXTERNAL_URL"),
-		APIKey:             get("API_KEY"),
-		APNsEnv:            getOrDefault(get, "APNS_ENV", "development"),
-		Debug:              get("MARVIN_DEBUG") == "true" || get("MARVIN_DEBUG") == "1",
+		APNsKeyID:             get("APNS_KEY_ID"),
+		APNsTeamID:            get("APNS_TEAM_ID"),
+		APNsPrivateKeyPath:    expandHome(get("APNS_KEY_P8_PATH")),
+		APNsBundleID:          getOrDefault(get, "APNS_BUNDLE_ID", "com.strubio.MarvinTimeTracker"),
+		MarvinAPIToken:        token,
+		MarvinFullAccessToken: fullAccessToken,
+		StateFilePath:         getOrDefault(get, "STATE_FILE_PATH", "./state.json"),
+		HistoryFilePath:       getOrDefault(get, "HISTORY_FILE_PATH", "./history.json"),
+		ListenAddr:            getOrDefault(get, "LISTEN_ADDR", ":8080"),
+		PrivateListenAddr:     getOrDefault(get, "PRIVATE_LISTEN_ADDR", ":8081"),
+		ExternalURL:           get("EXTERNAL_URL"),
+		APIKey:                get("API_KEY"),
+		APNsEnv:               getOrDefault(get, "APNS_ENV", "development"),
+		Debug:                 get("MARVIN_DEBUG") == "true" || get("MARVIN_DEBUG") == "1",
 	}
 
 	return cfg, nil
